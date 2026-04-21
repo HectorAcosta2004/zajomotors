@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "155683237802",
+    "project_id": "zajomotors-b3add",
+    "storage_bucket": "zajomotors-b3add.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:155683237802:android:c4ccd90968f717ce50c5d3",
+        "android_client_info": {
+          "package_name": "com.example.zajo_motors"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAinzS1Xfi1QynXsY82JXKzS5ZTdfrc2k0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
