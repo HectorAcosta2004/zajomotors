@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  final String baseUrl = "http://192.168.1.25:3000"; // 👈 CAMBIA TU IP
+  final String baseUrl = "http://192.168.2.52:3000";
 
   // 🔐 LOGIN
   Future<Map<String, dynamic>?> loginWithUID(String uid) async {
