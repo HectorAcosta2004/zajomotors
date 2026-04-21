@@ -1,29 +1,15 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
-import 'login_screen.dart';
 
 class HomeScreen extends StatelessWidget {
-  final AuthService auth = AuthService();
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Zajo Motors"),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.logout),
-            onPressed: () async {
-              await auth.logout();
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => LoginScreen()),
-              );
-            },
-          ),
-        ],
+      appBar: AppBar(title: const Text("Zajo Motors")),
+      body: const Center(
+        child: Text("Bienvenido Cliente 🚗", style: TextStyle(fontSize: 20)),
       ),
-      body: Center(child: Text("Bienvenido a Zajo Motors 🚗")),
     );
   }
 }

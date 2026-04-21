@@ -1,83 +1,160 @@
 const express = require("express");
 const mysql = require("mysql");
 const cors = require("cors");
+const bcrypt = require("bcrypt");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.get("/", (req, res) => {
-  res.send("API funcionando 🚀");
-});
 
-// 🔌 MYSQL
+// 🔌 CONEXIÓN MYSQL
 const db = mysql.createConnection({
   host: "localhost",
   user: "root",
   password: "",
-  database: "zajomotors"
+  database: "zajomotors",
 });
 
 db.connect((err) => {
   if (err) {
-    console.log("Error MySQL:", err);
+    console.log("❌ Error MySQL:", err);
   } else {
-    console.log("MySQL conectado 🚀");
+    console.log("✅ MySQL conectado");
   }
 });
 
 
+// ===============================
 // 🆕 REGISTER
+// ===============================
 app.post("/register", (req, res) => {
-  const { uid, nombre, email } = req.body;
+  const { nombre, email, password } = req.body;
 
-  console.log("📩 DATA RECIBIDA:", req.body);
+  console.log("📥 Registro recibido:", req.body);
 
-  if (!uid || !nombre || !email) {
+  // VALIDAR CAMPOS
+  if (!nombre || !email || !password) {
     return res.json({
       success: false,
-      error: "Faltan datos"
+      error: "Todos los campos son obligatorios",
     });
   }
 
-  const sql = `
-    INSERT INTO usuarios (firebase_uid, nombre, email, rol)
-    VALUES (?, ?, ?, 'cliente')
-  `;
+  // 🔍 VERIFICAR SI YA EXISTE
+  db.query(
+    "SELECT * FROM usuarios WHERE email = ?",
+    [email],
+    async (err, result) => {
+      if (err) {
+        console.log("❌ Error consulta:", err);
+        return res.json({ success: false, error: "Error servidor" });
+      }
 
-  db.query(sql, [uid, nombre, email], (err) => {
-    if (err) {
-      console.log("❌ MYSQL ERROR:", err.sqlMessage);
-      return res.json({
-        success: false,
-        error: err.sqlMessage
-      });
+      if (result.length > 0) {
+        return res.json({
+          success: false,
+          error: "El correo ya está registrado",
+        });
+      }
+
+      try {
+        // 🔐 ENCRIPTAR PASSWORD
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // 💾 INSERTAR USUARIO
+        const sql = `
+          INSERT INTO usuarios (nombre, email, password, rol)
+          VALUES (?, ?, ?, 'cliente')
+        `;
+
+        db.query(
+          sql,
+          [nombre, email, hashedPassword],
+          (err, result) => {
+            if (err) {
+              console.log("❌ Error insert:", err);
+              return res.json({
+                success: false,
+                error: err.sqlMessage,
+              });
+            }
+
+            res.json({
+              success: true,
+              message: "Usuario registrado correctamente",
+            });
+          }
+        );
+      } catch (error) {
+        console.log("❌ Error bcrypt:", error);
+        res.json({ success: false, error: "Error encriptando password" });
+      }
     }
-
-    res.json({
-      success: true,
-      message: "Usuario guardado correctamente"
-    });
-  });
+  );
 });
 
 
+// ===============================
 // 🔐 LOGIN
+// ===============================
 app.post("/login", (req, res) => {
-  const uid = req.body.uid;
+  const { email, password } = req.body;
 
+  console.log("📥 Login recibido:", req.body);
+
+  if (!email || !password) {
+    return res.json({
+      success: false,
+      error: "Email y password requeridos",
+    });
+  }
+
+  // 🔍 BUSCAR USUARIO
   db.query(
-    "SELECT id, nombre, email, rol FROM usuarios WHERE firebase_uid = ?",
-    [uid],
-    (err, result) => {
-      if (err) return res.json({ success: false });
+    "SELECT * FROM usuarios WHERE email = ?",
+    [email],
+    async (err, result) => {
+      if (err) {
+        console.log("❌ Error consulta:", err);
+        return res.json({ success: false });
+      }
 
-      if (result.length > 0) {
+      if (result.length === 0) {
+        return res.json({
+          success: false,
+          error: "Usuario no encontrado",
+        });
+      }
+
+      const user = result[0];
+
+      try {
+        // 🔐 COMPARAR PASSWORD
+        const validPassword = await bcrypt.compare(
+          password,
+          user.password
+        );
+
+        if (!validPassword) {
+          return res.json({
+            success: false,
+            error: "Contraseña incorrecta",
+          });
+        }
+
+        // ✅ LOGIN OK
         res.json({
           success: true,
-          user: result[0]
+          user: {
+            id: user.id,
+            nombre: user.nombre,
+            email: user.email,
+            rol: user.rol,
+          },
         });
-      } else {
+      } catch (error) {
+        console.log("❌ Error bcrypt:", error);
         res.json({ success: false });
       }
     }
@@ -85,9 +162,9 @@ app.post("/login", (req, res) => {
 });
 
 
+// ===============================
 // 🚀 SERVER
-const PORT = process.env.PORT || 3000;
-
-app.listen(3000, '0.0.0.0', () => {
-    console.log("Servidor escuchando en toda la red local");
+// ===============================
+app.listen(3000, () => {
+  console.log("🚀 API corriendo en http://localhost:3000");
 });

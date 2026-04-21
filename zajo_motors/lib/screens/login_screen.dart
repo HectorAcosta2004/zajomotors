@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:zajo_motors/screens/register_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../services/api_service.dart';
 import 'home_screen.dart';
+import 'admin_screen.dart';
+import 'tecnico_screen.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,99 +18,117 @@ class _LoginScreenState extends State<LoginScreen> {
   final email = TextEditingController();
   final password = TextEditingController();
 
-  final FirebaseAuth auth = FirebaseAuth.instance;
   final ApiService api = ApiService();
 
   bool loading = false;
 
+  // 🔐 LOGIN
   void loginUser() async {
     setState(() => loading = true);
 
-    try {
-      // 🔐 1. LOGIN EN FIREBASE
-      UserCredential userCredential = await auth.signInWithEmailAndPassword(
-        email: email.text.trim(),
-        password: password.text.trim(),
-      );
+    final response = await api.login(email.text.trim(), password.text.trim());
 
-      String uid = userCredential.user!.uid;
+    setState(() => loading = false);
 
-      // 🌐 2. CONSULTAR API (MYSQL)
-      final response = await api.loginWithUID(uid);
+    if (response != null && response["success"] == true) {
+      final user = response["user"];
+      String rol = user["rol"];
 
-      setState(() => loading = false);
+      // 💾 GUARDAR SESIÓN
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt("id", user["id"]);
+      await prefs.setString("nombre", user["nombre"]);
+      await prefs.setString("email", user["email"]);
+      await prefs.setString("rol", rol);
 
-      if (response != null && response["success"] == true) {
-        String rol = response["user"]["rol"];
-
-        // 🚗 3. REDIRECCIÓN POR ROL
+      // 🚦 REDIRECCIÓN POR ROL
+      if (rol == "admin") {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => HomeScreen()),
+          MaterialPageRoute(builder: (_) => const AdminScreen()),
         );
-
-        print("Usuario logueado con rol: $rol");
+      } else if (rol == "tecnico") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const TecnicoScreen()),
+        );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Usuario no registrado en sistema")),
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
         );
       }
-    } catch (e) {
-      setState(() => loading = false);
-      print(e);
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error login: $e")));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(response?["error"] ?? "Error login")),
+      );
     }
   }
 
+  @override
+  void dispose() {
+    email.dispose();
+    password.dispose();
+    super.dispose();
+  }
+
+  // 🎨 UI
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                "ZAJO MOTORS LOGIN",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-
-              const SizedBox(height: 20),
-
-              TextField(
-                controller: email,
-                decoration: const InputDecoration(labelText: "Email"),
-              ),
-
-              TextField(
-                controller: password,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: "Password"),
-              ),
-
-              const SizedBox(height: 20),
-
-              ElevatedButton(
-                onPressed: loading ? null : loginUser,
-                child: Text(loading ? "Cargando..." : "Iniciar sesión"),
-              ),
-              TextButton(
-                onPressed: () async {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => RegisterScreen()),
-                  );
-                },
-                child: const Text(
-                  "¿No tienes cuenta? Crear usuario",
-                  style: TextStyle(color: Colors.blue),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  "ZAJO MOTORS",
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
-              ),
-            ],
+
+                const SizedBox(height: 30),
+
+                TextField(
+                  controller: email,
+                  decoration: const InputDecoration(
+                    labelText: "Email",
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+
+                const SizedBox(height: 15),
+
+                TextField(
+                  controller: password,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: "Password",
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                ElevatedButton(
+                  onPressed: loading ? null : loginUser,
+                  child: Text(loading ? "Cargando..." : "Iniciar sesión"),
+                ),
+
+                const SizedBox(height: 10),
+
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                    );
+                  },
+                  child: const Text("Crear cuenta"),
+                ),
+              ],
+            ),
           ),
         ),
       ),
