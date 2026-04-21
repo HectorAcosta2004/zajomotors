@@ -53,4 +53,137 @@ class ApiService {
       return {"success": false, "error": "No hay conexión con el servidor"};
     }
   }
+
+  // 📦 OBTENER PRODUCTOS
+  Future<List> getProductos() async {
+    try {
+      final response = await http.get(Uri.parse("$baseUrl/productos"));
+
+      print("PRODUCTOS STATUS: ${response.statusCode}");
+      print("PRODUCTOS BODY: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        if (data["success"] == true) {
+          return data["productos"];
+        } else {
+          return [];
+        }
+      } else {
+        return [];
+      }
+    } catch (e) {
+      print("ERROR PRODUCTOS: $e");
+      return [];
+    }
+  }
+
+  // 🛒 OBTENER CARRITO
+  Future<List> getCarrito(int usuarioId) async {
+    final response = await http.get(Uri.parse("$baseUrl/carrito/$usuarioId"));
+
+    final data = jsonDecode(response.body);
+    return data["carrito"];
+  }
+
+  // ❌ ELIMINAR
+  Future<void> eliminarItem(int itemId) async {
+    await http.post(
+      Uri.parse("$baseUrl/carrito/eliminar"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"item_id": itemId}),
+    );
+  }
+
+  // ➕ SUMAR
+  Future<void> sumar(int itemId) async {
+    await http.post(
+      Uri.parse("$baseUrl/carrito/sumar"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"item_id": itemId}),
+    );
+  }
+
+  // ➖ RESTAR
+  Future<void> restar(int itemId) async {
+    await http.post(
+      Uri.parse("$baseUrl/carrito/restar"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"item_id": itemId}),
+    );
+  }
+
+  // 💳 CHECKOUT
+  Future<Map?> checkout(int usuarioId) async {
+    final response = await http.post(
+      Uri.parse("$baseUrl/checkout"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"usuario_id": usuarioId}),
+    );
+
+    return jsonDecode(response.body);
+  }
+
+  // 🔔 OBTENER NOTIFICACIONES
+  Future<List> getNotificaciones(int usuarioId) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$baseUrl/notificaciones/$usuarioId"),
+      );
+
+      print("NOTIF STATUS: ${response.statusCode}");
+      print("NOTIF BODY: ${response.body}");
+
+      final data = jsonDecode(response.body);
+
+      if (data["success"] == true) {
+        return data["data"];
+      } else {
+        return [];
+      }
+    } catch (e) {
+      print("ERROR NOTIFICACIONES: $e");
+      return [];
+    }
+  }
+
+  Future<List> getOrdenesTecnico() async {
+    final response = await http.get(Uri.parse("$baseUrl/ordenes/tecnico"));
+
+    final data = jsonDecode(response.body);
+    return data["data"];
+  }
+
+  // 🔧 CAMBIAR ESTADO
+  Future<void> cambiarEstado(int ordenId, String estado) async {
+    await http.post(
+      Uri.parse("$baseUrl/orden/estado"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"orden_id": ordenId, "estado": estado}),
+    );
+  }
+
+  // 🛒 AGREGAR AL CARRITO
+  Future<Map?> agregarCarrito(int usuarioId, int productoId) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/carrito/agregar"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"usuario_id": usuarioId, "producto_id": productoId}),
+      );
+
+      print("CARRITO STATUS: ${response.statusCode}");
+      print("CARRITO BODY: ${response.body}");
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {"success": false};
+      }
+    } catch (e) {
+      print("ERROR CARRITO: $e");
+      return {"success": false};
+    }
+  }
 }
