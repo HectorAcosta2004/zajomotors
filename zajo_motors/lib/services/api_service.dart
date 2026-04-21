@@ -2,20 +2,36 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  final String baseUrl = "http://172.16.97.125:3000";
+  final String baseUrl = "http://192.168.1.25:3000"; // 👈 CAMBIA TU IP
 
+  // 🔐 LOGIN
   Future<Map<String, dynamic>?> loginWithUID(String uid) async {
     try {
-      final response = await http.post(
+      final res = await http.post(
         Uri.parse("$baseUrl/login"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"uid": uid}),
       );
 
-      final data = jsonDecode(response.body);
-      return data;
+      return jsonDecode(res.body);
     } catch (e) {
-      print("Error API: $e");
+      print("Error login API: $e");
+      return null;
+    }
+  }
+
+  // 🆕 REGISTER
+  Future<Map<String, dynamic>?> registerUser(Map data) async {
+    try {
+      final res = await http.post(
+        Uri.parse("$baseUrl/register"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(data),
+      );
+
+      return jsonDecode(res.body);
+    } catch (e) {
+      print("Error register API: $e");
       return null;
     }
   }

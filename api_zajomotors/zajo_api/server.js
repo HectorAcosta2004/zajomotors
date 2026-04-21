@@ -6,8 +6,11 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.get("/", (req, res) => {
+  res.send("API funcionando 🚀");
+});
 
-// 🔌 CONEXIÓN MYSQL
+// 🔌 MYSQL
 const db = mysql.createConnection({
   host: "localhost",
   user: "root",
@@ -17,13 +20,49 @@ const db = mysql.createConnection({
 
 db.connect((err) => {
   if (err) {
-    console.log("Error conexión DB:", err);
+    console.log("Error MySQL:", err);
   } else {
     console.log("MySQL conectado 🚀");
   }
 });
 
-// 🔐 LOGIN CON FIREBASE UID
+
+// 🆕 REGISTER
+app.post("/register", (req, res) => {
+  const { uid, nombre, email } = req.body;
+
+  console.log("📩 DATA RECIBIDA:", req.body);
+
+  if (!uid || !nombre || !email) {
+    return res.json({
+      success: false,
+      error: "Faltan datos"
+    });
+  }
+
+  const sql = `
+    INSERT INTO usuarios (firebase_uid, nombre, email, rol)
+    VALUES (?, ?, ?, 'cliente')
+  `;
+
+  db.query(sql, [uid, nombre, email], (err) => {
+    if (err) {
+      console.log("❌ MYSQL ERROR:", err.sqlMessage);
+      return res.json({
+        success: false,
+        error: err.sqlMessage
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Usuario guardado correctamente"
+    });
+  });
+});
+
+
+// 🔐 LOGIN
 app.post("/login", (req, res) => {
   const uid = req.body.uid;
 
@@ -31,9 +70,7 @@ app.post("/login", (req, res) => {
     "SELECT id, nombre, email, rol FROM usuarios WHERE firebase_uid = ?",
     [uid],
     (err, result) => {
-      if (err) {
-        return res.status(500).json(err);
-      }
+      if (err) return res.json({ success: false });
 
       if (result.length > 0) {
         res.json({
@@ -41,16 +78,16 @@ app.post("/login", (req, res) => {
           user: result[0]
         });
       } else {
-        res.json({
-          success: false,
-          message: "Usuario no encontrado"
-        });
+        res.json({ success: false });
       }
     }
   );
 });
 
-// 🚀 INICIAR SERVIDOR
-app.listen(3000, () => {
-  console.log("API corriendo en http://localhost:3000");
+
+// 🚀 SERVER
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Servidor corriendo en http://0.0.0.0:${PORT}`);
 });
