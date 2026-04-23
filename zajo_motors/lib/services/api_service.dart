@@ -164,6 +164,65 @@ class ApiService {
     );
   }
 
+  // 📦 HISTORIAL DE ÓRDENES
+  Future<List> getOrdenes(int usuarioId) async {
+    try {
+      final response = await http.get(Uri.parse("$baseUrl/ordenes/$usuarioId"));
+
+      print("ORDENES STATUS: ${response.statusCode}");
+      print("ORDENES BODY: ${response.body}");
+
+      final data = jsonDecode(response.body);
+
+      if (data["success"] == true) {
+        return data["ordenes"];
+      } else {
+        return [];
+      }
+    } catch (e) {
+      print("ERROR ORDENES: $e");
+      return [];
+    }
+  }
+
+  // 📦 HISTORIAL DE ÓRDENES
+  Future<List> getHistorial(int usuarioId) async {
+    try {
+      final response = await http.get(Uri.parse("$baseUrl/ordenes/$usuarioId"));
+
+      final data = jsonDecode(response.body);
+
+      if (data["success"] == true) {
+        return data["ordenes"];
+      } else {
+        return [];
+      }
+    } catch (e) {
+      print("ERROR HISTORIAL: $e");
+      return [];
+    }
+  }
+
+  // 📄 DETALLE ORDEN
+  Future<List> getDetalleOrden(int ordenId) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$baseUrl/orden/detalle/$ordenId"),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (data["success"] == true) {
+        return data["detalle"];
+      } else {
+        return [];
+      }
+    } catch (e) {
+      print("ERROR DETALLE: $e");
+      return [];
+    }
+  }
+
   // 🛒 AGREGAR AL CARRITO
   Future<Map?> agregarCarrito(int usuarioId, int productoId) async {
     try {

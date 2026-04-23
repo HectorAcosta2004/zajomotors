@@ -23,8 +23,6 @@ db.connect((err) => {
     console.log("✅ MySQL conectado");
   }
 });
-
-
 // ===============================
 // 🆕 REGISTER
 // ===============================
@@ -70,8 +68,6 @@ app.post("/register", (req, res) => {
     }
   );
 });
-
-
 // ===============================
 // 🔐 LOGIN
 // ===============================
@@ -418,6 +414,8 @@ app.get("/ordenes/:usuario_id", (req, res) => {
     }
   );
 });
+
+
 // 🔔 NOTIFICACIONES
 app.get("/notificaciones/:usuario_id", (req, res) => {
   const usuarioId = req.params.usuario_id;
@@ -467,5 +465,5 @@ app.post("/orden/estado", (req, res) => {
 // 🚀 SERVER
 // ===============================
 app.listen(3000, "0.0.0.0", () => {
-  console.log("🚀 API corriendo en http://192.168.88.105:3000");
+  console.log("🚀 API corriendo en http://172.16.100.124:3000");
 });
