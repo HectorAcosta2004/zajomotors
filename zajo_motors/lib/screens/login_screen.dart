@@ -22,7 +22,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool loading = false;
 
-  // 🔐 LOGIN
   void loginUser() async {
     setState(() => loading = true);
 
@@ -34,14 +33,12 @@ class _LoginScreenState extends State<LoginScreen> {
       final user = response["user"];
       String rol = user["rol"];
 
-      // 💾 GUARDAR SESIÓN
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt("id", user["id"]);
       await prefs.setString("nombre", user["nombre"]);
       await prefs.setString("email", user["email"]);
       await prefs.setString("rol", rol);
 
-      // 🚦 REDIRECCIÓN POR ROL
       if (rol == "admin") {
         Navigator.pushReplacement(
           context,
@@ -72,60 +69,124 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  // 🎨 UI
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(20),
+      body: Container(
+        width: double.infinity,
+
+        // 🔥 FONDO GRADIENTE
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF0F2027), Color(0xFF203A43), Color(0xFF2C5364)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+
         child: Center(
           child: SingleChildScrollView(
+            padding: const EdgeInsets.all(25),
+
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // 🚗 LOGO / TITULO
+                const Icon(Icons.directions_car, size: 80, color: Colors.white),
+
+                const SizedBox(height: 10),
+
                 const Text(
-                  "ZAJO MOTORS",
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  "Zajo Motors",
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
 
                 const SizedBox(height: 30),
 
-                TextField(
-                  controller: email,
-                  decoration: const InputDecoration(
-                    labelText: "Email",
-                    border: OutlineInputBorder(),
+                // 📦 CARD LOGIN
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: const [
+                      BoxShadow(
+                        blurRadius: 10,
+                        color: Colors.black26,
+                        offset: Offset(0, 5),
+                      ),
+                    ],
                   ),
-                ),
 
-                const SizedBox(height: 15),
+                  child: Column(
+                    children: [
+                      // EMAIL
+                      TextField(
+                        controller: email,
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.email),
+                          labelText: "Correo",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
 
-                TextField(
-                  controller: password,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: "Password",
-                    border: OutlineInputBorder(),
+                      const SizedBox(height: 15),
+
+                      // PASSWORD
+                      TextField(
+                        controller: password,
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.lock),
+                          labelText: "Contraseña",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // BOTÓN LOGIN
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: loading ? null : loginUser,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            backgroundColor: const Color(0xFF2C5364),
+                          ),
+                          child: Text(
+                            loading ? "Cargando..." : "Iniciar sesión",
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // REGISTRO
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const RegisterScreen(),
+                            ),
+                          );
+                        },
+                        child: const Text("Crear cuenta"),
+                      ),
+                    ],
                   ),
-                ),
-
-                const SizedBox(height: 20),
-
-                ElevatedButton(
-                  onPressed: loading ? null : loginUser,
-                  child: Text(loading ? "Cargando..." : "Iniciar sesión"),
-                ),
-
-                const SizedBox(height: 10),
-
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const RegisterScreen()),
-                    );
-                  },
-                  child: const Text("Crear cuenta"),
                 ),
               ],
             ),

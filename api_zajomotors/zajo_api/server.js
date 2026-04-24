@@ -465,5 +465,5 @@ app.post("/orden/estado", (req, res) => {
 // 🚀 SERVER
 // ===============================
 app.listen(3000, "0.0.0.0", () => {
-  console.log("🚀 API corriendo en http://172.16.100.124:3000");
+  console.log("🚀 API corriendo en http://192.168.88.105:3000");
 });

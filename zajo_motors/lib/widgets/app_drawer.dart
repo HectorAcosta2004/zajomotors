@@ -37,131 +37,126 @@ class _AppDrawerState extends State<AppDrawer> {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      child: ListView(
-        children: [
-          // 🔵 HEADER
-          UserAccountsDrawerHeader(
-            decoration: const BoxDecoration(color: Colors.blue),
-            accountName: Text(nombre),
-            accountEmail: Text(rol.toUpperCase()),
-            currentAccountPicture: const CircleAvatar(
-              child: Icon(Icons.person, size: 40),
+      child: Container(
+        color: Colors.grey[100],
+        child: Column(
+          children: [
+            // 🔥 HEADER MODERNO
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF0F2027), Color(0xFF2C5364)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: Column(
+                children: [
+                  const CircleAvatar(
+                    radius: 40,
+                    backgroundColor: Colors.white,
+                    child: Icon(Icons.person, size: 40, color: Colors.black),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    nombre,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    rol.toUpperCase(),
+                    style: const TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          // 🔽 MENÚ DINÁMICO
-          ...buildMenu(),
+            const SizedBox(height: 10),
 
-          const Divider(),
+            // 🔽 MENÚ
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                children: buildMenu(),
+              ),
+            ),
 
-          ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text("Cerrar sesión"),
-            onTap: logout,
-          ),
-        ],
+            // 🔴 LOGOUT BONITO
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: ListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                tileColor: Colors.red[50],
+                leading: const Icon(Icons.logout, color: Colors.red),
+                title: const Text(
+                  "Cerrar sesión",
+                  style: TextStyle(color: Colors.red),
+                ),
+                onTap: logout,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  // 🔥 MENÚ SEGÚN ROL
+  // 🎯 MENÚ POR ROL
   List<Widget> buildMenu() {
     if (rol == "cliente") {
       return [
-        item(Icons.store, "Catálogo"),
-        item(Icons.shopping_cart, "Mi carrito"),
-        item(Icons.build, "Servicios"),
-        item(Icons.history, "Historial"), // ✅ NUEVO
-        item(Icons.notifications, "Notificaciones"),
-        item(Icons.person, "Mi perfil"),
+        item(Icons.store, "Catálogo", "/catalogo"),
+        item(Icons.shopping_cart, "Mi carrito", "/carrito"),
+        item(Icons.build, "Servicios", "/servicios"),
+        item(Icons.history, "Historial", "/historial"),
+        item(Icons.notifications, "Notificaciones", "/notificaciones"),
+        item(Icons.person, "Mi perfil", "/perfil"),
       ];
     }
 
     if (rol == "tecnico") {
       return [
-        item(Icons.assignment, "Órdenes"), // ✅ mejor nombre
-        item(Icons.check_circle, "Finalizados"),
-        item(Icons.notifications_active, "Notificaciones"),
-        item(Icons.person, "Mi perfil"),
+        item(Icons.build_circle, "Órdenes", "/ordenes_tecnico"),
+        item(Icons.notifications_active, "Notificaciones", "/notificaciones"),
+        item(Icons.person, "Mi perfil", "/perfil"),
       ];
     }
 
     if (rol == "admin") {
       return [
-        item(Icons.people, "Usuarios"),
-        item(Icons.store, "Catálogo"),
-        item(Icons.location_on, "Sucursales"),
-        item(Icons.receipt_long, "Compras"),
-        item(Icons.notifications, "Notificaciones"),
-        item(Icons.person, "Perfil"),
+        item(Icons.people, "Usuarios", "/usuarios"),
+        item(Icons.store, "Catálogo", "/catalogo"),
+        item(Icons.location_on, "Sucursales", "/sucursales"),
+        item(Icons.attach_money, "Compras", "/compras"),
+        item(Icons.notifications, "Notificaciones", "/notificaciones"),
+        item(Icons.person, "Perfil", "/perfil"),
       ];
     }
 
     return [];
   }
 
-  // 🔘 ITEM GENERICO
-  Widget item(IconData icon, String title) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      onTap: () {
-        Navigator.pop(context);
-        navigate(title);
-      },
+  // 🎨 ITEM BONITO
+  Widget item(IconData icon, String title, String route) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 5),
+      child: ListTile(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        tileColor: Colors.white,
+        leading: Icon(icon, color: Colors.blueGrey),
+        title: Text(title),
+        onTap: () {
+          Navigator.pop(context);
+          Navigator.pushNamed(context, route);
+        },
+      ),
     );
-  }
-
-  // 🚀 NAVEGACIÓN
-  void navigate(String title) {
-    switch (title) {
-      // CLIENTE
-      case "Catálogo":
-        Navigator.pushNamed(context, "/catalogo");
-        break;
-
-      case "Mi carrito":
-        Navigator.pushNamed(context, "/carrito");
-        break;
-
-      case "Servicios":
-        Navigator.pushNamed(context, "/servicios");
-        break;
-
-      case "Historial":
-        Navigator.pushNamed(context, "/historial");
-        break;
-
-      case "Notificaciones":
-        Navigator.pushNamed(context, "/notificaciones");
-        break;
-
-      case "Mi perfil":
-      case "Perfil":
-        Navigator.pushNamed(context, "/perfil");
-        break;
-
-      // TECNICO
-      case "Órdenes":
-        Navigator.pushNamed(context, "/ordenes_tecnico");
-        break;
-
-      case "Finalizados":
-        Navigator.pushNamed(context, "/ordenes_finalizadas");
-        break;
-
-      // ADMIN
-      case "Usuarios":
-        Navigator.pushNamed(context, "/usuarios");
-        break;
-
-      case "Sucursales":
-        Navigator.pushNamed(context, "/sucursales");
-        break;
-
-      case "Compras":
-        Navigator.pushNamed(context, "/compras");
-        break;
-    }
   }
 }
