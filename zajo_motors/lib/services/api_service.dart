@@ -46,6 +46,53 @@ class ApiService {
     }
   }
 
+  // 🛠️ OBTENER SERVICIOS
+  // 🛠️ OBTENER SERVICIOS
+  Future<List> getServicios() async {
+    try {
+      final response = await http.get(Uri.parse("$baseUrl/servicios"));
+
+      print("📡 STATUS SERVICIOS: ${response.statusCode}");
+      print(
+        "📡 BODY SERVICIOS: ${response.body}",
+      ); // Esto nos dirá qué manda Node.js
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data["success"] == true) {
+          return data["servicios"] ?? [];
+        }
+      }
+      return [];
+    } catch (e) {
+      print("❌ ERROR SERVICIOS: $e");
+      return [];
+    }
+  }
+
+  // 📅 AGENDAR SERVICIO
+  Future<bool> agendarServicio(
+    int clienteId,
+    int servicioId,
+    double precio,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/servicios/agendar'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "cliente_id": clienteId,
+          "servicio_id": servicioId,
+          "precio": precio,
+        }),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print("ERROR AL AGENDAR: $e");
+      return false;
+    }
+  }
+
   // Finalizar la compra y crear la orden
   Future<bool> finalizarCompra(int usuarioId, double total) async {
     try {

@@ -3,7 +3,6 @@ import '../services/api_service.dart';
 
 class DetalleOrdenScreen extends StatefulWidget {
   final int ordenId;
-
   const DetalleOrdenScreen({super.key, required this.ordenId});
 
   @override
@@ -12,8 +11,7 @@ class DetalleOrdenScreen extends StatefulWidget {
 
 class _DetalleOrdenScreenState extends State<DetalleOrdenScreen> {
   final ApiService api = ApiService();
-
-  List detalle = [];
+  List detalles = [];
   bool loading = true;
 
   @override
@@ -24,58 +22,75 @@ class _DetalleOrdenScreenState extends State<DetalleOrdenScreen> {
 
   void cargarDetalle() async {
     final data = await api.getDetalleOrden(widget.ordenId);
-
     setState(() {
-      detalle = data;
+      detalles = data;
       loading = false;
     });
-  }
-
-  double calcularTotal() {
-    double total = 0;
-
-    for (var item in detalle) {
-      total +=
-          double.parse(item["precio"].toString()) *
-          int.parse(item["cantidad"].toString());
-    }
-
-    return total;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Detalle Orden #${widget.ordenId}")),
-
+      appBar: AppBar(
+        title: Text("Detalle Orden #${widget.ordenId}"),
+        backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
+      ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
+                const Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Text(
+                    "Resumen de productos/servicios",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
                 Expanded(
                   child: ListView.builder(
-                    itemCount: detalle.length,
+                    itemCount: detalles.length,
                     itemBuilder: (context, index) {
-                      final item = detalle[index];
-
+                      final d = detalles[index];
                       return ListTile(
-                        title: Text(item["nombre"]),
-                        subtitle: Text(
-                          "Cantidad: ${item["cantidad"]} | \$${item["precio"]}",
+                        leading: const Icon(
+                          Icons.check_circle,
+                          color: Colors.green,
+                        ),
+                        title: Text(d["nombre"]),
+                        subtitle: Text("Cantidad: ${d["cantidad"]}"),
+                        trailing: Text(
+                          "\$${d["precio"]}",
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       );
                     },
                   ),
                 ),
-
                 Container(
-                  padding: const EdgeInsets.all(20),
-                  child: Text(
-                    "Total: \$${calcularTotal()}",
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                  padding: const EdgeInsets.all(25),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(20),
                     ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "TOTAL PAGADO",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        "\$${detalles.fold(0.0, (sum, item) => sum + (double.parse(item["precio"].toString()) * int.parse(item["cantidad"].toString())))}",
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
