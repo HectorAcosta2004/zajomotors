@@ -54,9 +54,16 @@ class ApiService {
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"usuario_id": usuarioId, "total": total}),
       );
-      return response.statusCode == 200;
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        //  ESTO NOS DIRÁ EXACTAMENTE QUÉ FALLÓ
+        print("❌ ERROR DEL SERVIDOR AL FINALIZAR: ${response.body}");
+        return false;
+      }
     } catch (e) {
-      print("Error de conexión: $e");
+      print("❌ ERROR DE CONEXIÓN: $e");
       return false;
     }
   }
