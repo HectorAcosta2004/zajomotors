@@ -4,8 +4,13 @@ import '../widgets/app_drawer.dart';
 class MainLayout extends StatelessWidget {
   final String title;
   final Widget body;
-
-  const MainLayout({super.key, required this.title, required this.body});
+  final Widget? floatingActionButton;
+  const MainLayout({
+    super.key,
+    required this.title,
+    required this.body,
+    this.floatingActionButton,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -15,6 +20,8 @@ class MainLayout extends StatelessWidget {
       appBar: AppBar(title: Text(title), centerTitle: true),
 
       body: body,
+
+      floatingActionButton: floatingActionButton,
     );
   }
 }

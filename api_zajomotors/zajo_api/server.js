@@ -69,6 +69,75 @@ app.post("/register", (req, res) => {
   );
 });
 // ===============================
+// CATALOGO
+// ===============================
+
+//CREAR
+app.post("/producto/crear", (req, res) => {
+  const { nombre, descripcion, precio, stock, imagen } = req.body;
+
+  const sql = `
+    INSERT INTO productos (nombre, descripcion, precio, stock, imagen)
+    VALUES (?, ?, ?, ?, ?)
+  `;
+
+  db.query(sql, [nombre, descripcion, precio, stock, imagen], (err) => {
+    if (err) {
+      console.log(err);
+      return res.json({ success: false });
+    }
+
+    res.json({
+      success: true,
+      message: "Producto creado",
+    });
+  });
+});
+
+//EDITAR//
+app.post("/producto/editar", (req, res) => {
+  const { id, nombre, precio, stock } = req.body;
+
+  console.log("📥 EDITAR RECIBIDO:", req.body);
+
+  const sql = `
+    UPDATE productos 
+    SET nombre = ?, precio = ?, stock = ?
+    WHERE id = ?
+  `;
+
+  db.query(sql, [nombre, precio, stock, id], (err, result) => {
+    if (err) {
+      console.log("❌ ERROR SQL:", err);
+      return res.json({ success: false, error: err });
+    }
+
+    console.log("✅ FILAS AFECTADAS:", result.affectedRows);
+
+    res.json({
+      success: true,
+      message: "Producto actualizado",
+    });
+  });
+});
+
+//ELIMINAR
+app.post("/producto/eliminar", (req, res) => {
+  const { id } = req.body;
+
+  db.query("DELETE FROM productos WHERE id = ?", [id], (err) => {
+    if (err) {
+      console.log(err);
+      return res.json({ success: false });
+    }
+
+    res.json({
+      success: true,
+      message: "Producto eliminado",
+    });
+  });
+});
+// ===============================
 // 🔐 LOGIN
 // ===============================
 app.post("/login", (req, res) => {
@@ -378,15 +447,8 @@ app.get("/orden/detalle/:id", (req, res) => {
     res.json({ success: true, detalle: result });
   });
 });
-app.get("/notificaciones/:usuario_id", (req, res) => {
-  db.query(
-    "SELECT * FROM notificaciones WHERE usuario_id = ? ORDER BY id DESC",
-    [req.params.usuario_id],
-    (err, result) => {
-      res.json({ success: true, data: result });
-    }
-  );
-});
+
+
 app.get("/ordenes/tecnico", (req, res) => {
   db.query(
     "SELECT * FROM orden_servicio ORDER BY id DESC",
@@ -465,5 +527,5 @@ app.post("/orden/estado", (req, res) => {
 // 🚀 SERVER
 // ===============================
 app.listen(3000, "0.0.0.0", () => {
-  console.log("🚀 API corriendo en http://192.168.88.105:3000");
+  console.log("🚀 API corriendo en http://172.16.96.18:3000");
 });

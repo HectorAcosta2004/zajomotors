@@ -132,7 +132,7 @@ class _AppDrawerState extends State<AppDrawer> {
     if (rol == "admin") {
       return [
         item(Icons.people, "Usuarios", "/usuarios"),
-        item(Icons.store, "Catálogo", "/catalogo"),
+        item(Icons.store, "Catálogo", "/catalogo_admin"),
         item(Icons.location_on, "Sucursales", "/sucursales"),
         item(Icons.attach_money, "Compras", "/compras"),
         item(Icons.notifications, "Notificaciones", "/notificaciones"),

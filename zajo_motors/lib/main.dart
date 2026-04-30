@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:zajo_motors/screens/catalogo_admin_screen.dart';
 
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
@@ -44,6 +45,7 @@ class MyApp extends StatelessWidget {
         "/home": (context) => const HomeScreen(),
 
         "/catalogo": (context) => const CatalogoScreen(),
+        "/catalogo_admin": (context) => const CatalogoAdminScreen(),
         "/carrito": (context) => const CarritoScreen(),
         "/servicios": (context) => const ServiciosScreen(),
 

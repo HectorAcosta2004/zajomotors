@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  final String baseUrl = "http://192.168.88.105:3000";
+  final String baseUrl = "http://172.16.96.18:3000";
 
   // 🆕 REGISTER
   Future<Map?> register(String nombre, String email, String password) async {
@@ -244,5 +244,43 @@ class ApiService {
       print("ERROR CARRITO: $e");
       return {"success": false};
     }
+  }
+
+  // CATALOGO ADMIN
+  // ➕ CREAR
+  Future<void> crearProducto(Map data) async {
+    await http.post(
+      Uri.parse("$baseUrl/producto/crear"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(data),
+    );
+  }
+
+  // ✏️ EDITAR
+  Future<Map?> editarProducto(Map data) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/producto/editar"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(data),
+      );
+
+      print("📤 ENVIANDO: $data");
+      print("📥 RESPUESTA: ${response.body}");
+
+      return jsonDecode(response.body);
+    } catch (e) {
+      print("❌ ERROR EDIT: $e");
+      return {"success": false};
+    }
+  }
+
+  // ❌ ELIMINAR
+  Future<void> eliminarProducto(int id) async {
+    await http.post(
+      Uri.parse("$baseUrl/producto/eliminar"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"id": id}),
+    );
   }
 }
