@@ -285,16 +285,34 @@ app.post("/carrito/restar", (req, res) => {
 });
 
 // ===============================
-// 📄 ÓRDENES E HISTORIAL
+// 📄 DETALLE ORDEN (MEJORADO: Productos + Servicios)
 // ===============================
 app.get("/orden/detalle/:id", (req, res) => {
-  const sql = "SELECT p.nombre, d.cantidad, d.precio FROM detalle_orden d JOIN productos p ON d.producto_id = p.id WHERE d.orden_id = ?";
-  db.query(sql, [req.params.id], (err, result) => {
-    if (err) return res.json({ success: false });
+  const id = req.params.id;
+
+  // Esta consulta busca en ambas tablas y junta los resultados
+  const sql = `
+    SELECT p.nombre, d.cantidad, d.precio
+    FROM detalle_orden d
+    JOIN productos p ON d.producto_id = p.id
+    WHERE d.orden_id = ?
+    
+    UNION ALL
+    
+    SELECT s.nombre, 1 as cantidad, ds.precio
+    FROM detalle_servicio ds
+    JOIN servicios s ON ds.servicio_id = s.id
+    WHERE ds.orden_id = ?
+  `;
+
+  db.query(sql, [id, id], (err, result) => {
+    if (err) {
+      console.log("❌ Error al obtener detalle:", err);
+      return res.json({ success: false });
+    }
     res.json({ success: true, detalle: result });
   });
 });
-
 app.get("/ordenes/tecnico", (req, res) => {
   db.query("SELECT * FROM orden_servicio ORDER BY id DESC", (err, result) => {
     res.json({ success: true, data: result });

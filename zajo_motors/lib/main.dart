@@ -15,6 +15,7 @@ import 'screens/perfil_screen.dart';
 import 'screens/usuarios_screen.dart';
 import 'screens/sucursales_screen.dart';
 import 'screens/compras_screen.dart';
+import 'screens/historial_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,15 +48,19 @@ class MyApp extends StatelessWidget {
       routes: {
         "/login": (context) => const LoginScreen(),
         "/home": (context) => const HomeScreen(),
+
         "/catalogo": (context) => const CatalogoScreen(),
         "/catalogo_admin": (context) => const CatalogoAdminScreen(),
         "/carrito": (context) => const CarritoScreen(),
         "/servicios": (context) => const ServiciosScreen(),
+
         "/notificaciones": (context) => const NotificacionesScreen(),
         "/perfil": (context) => const PerfilScreen(),
+
         "/usuarios": (context) => const UsuariosScreen(),
         "/sucursales": (context) => const SucursalesScreen(),
         "/compras": (context) => const ComprasScreen(),
+        "/historial": (context) => const HistorialScreen(),
       },
 
       home: const SplashScreen(),

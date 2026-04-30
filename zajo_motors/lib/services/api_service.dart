@@ -320,19 +320,24 @@ class ApiService {
   // 📄 DETALLE ORDEN
   Future<List> getDetalleOrden(int ordenId) async {
     try {
+      print("🔍 BUSCANDO DETALLE PARA ORDEN: $ordenId");
       final response = await http.get(
         Uri.parse("$baseUrl/orden/detalle/$ordenId"),
       );
+
+      print("📡 STATUS DETALLE: ${response.statusCode}");
+      print("📡 BODY DETALLE: ${response.body}");
 
       final data = jsonDecode(response.body);
 
       if (data["success"] == true) {
         return data["detalle"];
       } else {
+        print("❌ El servidor devolvió success: false");
         return [];
       }
     } catch (e) {
-      print("ERROR DETALLE: $e");
+      print("❌ ERROR DETALLE FLUTTER: $e");
       return [];
     }
   }

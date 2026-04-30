@@ -30,20 +30,31 @@ class _DetalleOrdenScreenState extends State<DetalleOrdenScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Calculamos el total de forma segura convirtiendo a double cada item
+    double totalAcumulado = detalles.fold(0.0, (sum, item) {
+      double precio = double.tryParse(item["precio"].toString()) ?? 0.0;
+      int cantidad = int.tryParse(item["cantidad"].toString()) ?? 1;
+      return sum + (precio * cantidad);
+    });
+
     return Scaffold(
       appBar: AppBar(
-        title: Text("Detalle Orden #${widget.ordenId}"),
+        title: Text("Orden #${widget.ordenId}"),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
       ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
+          : detalles.isEmpty
+          ? const Center(
+              child: Text("No se encontraron detalles para esta orden."),
+            )
           : Column(
               children: [
                 const Padding(
                   padding: EdgeInsets.all(20),
                   child: Text(
-                    "Resumen de productos/servicios",
+                    "Resumen de la Orden",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -54,14 +65,17 @@ class _DetalleOrdenScreenState extends State<DetalleOrdenScreen> {
                       final d = detalles[index];
                       return ListTile(
                         leading: const Icon(
-                          Icons.check_circle,
-                          color: Colors.green,
+                          Icons.build_circle,
+                          color: Colors.blue,
                         ),
-                        title: Text(d["nombre"]),
+                        title: Text(d["nombre"] ?? "Sin nombre"),
                         subtitle: Text("Cantidad: ${d["cantidad"]}"),
                         trailing: Text(
                           "\$${d["precio"]}",
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                       );
                     },
@@ -70,9 +84,16 @@ class _DetalleOrdenScreenState extends State<DetalleOrdenScreen> {
                 Container(
                   padding: const EdgeInsets.all(25),
                   decoration: BoxDecoration(
-                    color: Colors.grey[200],
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 10,
+                        offset: Offset(0, -5),
+                      ),
+                    ],
                     borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(20),
+                      top: Radius.circular(30),
                     ),
                   ),
                   child: Row(
@@ -80,12 +101,15 @@ class _DetalleOrdenScreenState extends State<DetalleOrdenScreen> {
                     children: [
                       const Text(
                         "TOTAL PAGADO",
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       Text(
-                        "\$${detalles.fold(0.0, (sum, item) => sum + (double.parse(item["precio"].toString()) * int.parse(item["cantidad"].toString())))}",
+                        "\$${totalAcumulado.toStringAsFixed(2)}",
                         style: const TextStyle(
-                          fontSize: 20,
+                          fontSize: 24,
                           fontWeight: FontWeight.bold,
                           color: Colors.blue,
                         ),
