@@ -23,12 +23,12 @@ db.connect((err) => {
     console.log("✅ MySQL conectado");
   }
 });
+
 // ===============================
 // 🆕 REGISTER
 // ===============================
 app.post("/register", (req, res) => {
   const { nombre, email, password } = req.body;
-
   console.log("📥 Registro:", req.body);
 
   if (!nombre || !email || !password) {
@@ -42,10 +42,7 @@ app.post("/register", (req, res) => {
       if (err) return res.json({ success: false });
 
       if (result.length > 0) {
-        return res.json({
-          success: false,
-          error: "Correo ya registrado",
-        });
+        return res.json({ success: false, error: "Correo ya registrado" });
       }
 
       const hash = await bcrypt.hash(password, 10);
@@ -58,130 +55,86 @@ app.post("/register", (req, res) => {
             console.log(err);
             return res.json({ success: false });
           }
-
-          res.json({
-            success: true,
-            message: "Usuario creado",
-          });
+          res.json({ success: true, message: "Usuario creado" });
         }
       );
     }
   );
 });
-// ===============================
-// CATALOGO
-// ===============================
 
-//CREAR
+// ===============================
+// CATALOGO (ADMIN)
+// ===============================
 app.post("/producto/crear", (req, res) => {
   const { nombre, descripcion, precio, stock, imagen } = req.body;
-
-  const sql = `
-    INSERT INTO productos (nombre, descripcion, precio, stock, imagen)
-    VALUES (?, ?, ?, ?, ?)
-  `;
-
+  const sql = "INSERT INTO productos (nombre, descripcion, precio, stock, imagen) VALUES (?, ?, ?, ?, ?)";
+  
   db.query(sql, [nombre, descripcion, precio, stock, imagen], (err) => {
     if (err) {
       console.log(err);
       return res.json({ success: false });
     }
-
-    res.json({
-      success: true,
-      message: "Producto creado",
-    });
+    res.json({ success: true, message: "Producto creado" });
   });
 });
 
-//EDITAR//
 app.post("/producto/editar", (req, res) => {
   const { id, nombre, precio, stock } = req.body;
-
   console.log("📥 EDITAR RECIBIDO:", req.body);
 
-  const sql = `
-    UPDATE productos 
-    SET nombre = ?, precio = ?, stock = ?
-    WHERE id = ?
-  `;
-
+  const sql = "UPDATE productos SET nombre = ?, precio = ?, stock = ? WHERE id = ?";
   db.query(sql, [nombre, precio, stock, id], (err, result) => {
     if (err) {
       console.log("❌ ERROR SQL:", err);
       return res.json({ success: false, error: err });
     }
-
-    console.log("✅ FILAS AFECTADAS:", result.affectedRows);
-
-    res.json({
-      success: true,
-      message: "Producto actualizado",
-    });
+    res.json({ success: true, message: "Producto actualizado" });
   });
 });
 
-//ELIMINAR
 app.post("/producto/eliminar", (req, res) => {
   const { id } = req.body;
-
   db.query("DELETE FROM productos WHERE id = ?", [id], (err) => {
     if (err) {
       console.log(err);
       return res.json({ success: false });
     }
-
-    res.json({
-      success: true,
-      message: "Producto eliminado",
-    });
+    res.json({ success: true, message: "Producto eliminado" });
   });
 });
+
 // ===============================
 // 🔐 LOGIN
 // ===============================
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
-
   console.log("📥 Login:", req.body);
 
-  db.query(
-    "SELECT * FROM usuarios WHERE email = ?",
-    [email],
-    async (err, result) => {
-      if (err) return res.json({ success: false });
+  db.query("SELECT * FROM usuarios WHERE email = ?", [email], async (err, result) => {
+    if (err) return res.json({ success: false });
 
-      if (result.length === 0) {
-        return res.json({
-          success: false,
-          error: "Usuario no encontrado",
-        });
-      }
-
-      const user = result[0];
-
-      const valid = await bcrypt.compare(password, user.password);
-
-      if (!valid) {
-        return res.json({
-          success: false,
-          error: "Contraseña incorrecta",
-        });
-      }
-
-      res.json({
-        success: true,
-        user: {
-          id: user.id,
-          nombre: user.nombre,
-          email: user.email,
-          rol: user.rol,
-        },
-      });
+    if (result.length === 0) {
+      return res.json({ success: false, error: "Usuario no encontrado" });
     }
-  );
-});
 
+    const user = result[0];
+    const valid = await bcrypt.compare(password, user.password);
+
+    if (!valid) {
+      return res.json({ success: false, error: "Contraseña incorrecta" });
+    }
+
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        nombre: user.nombre,
+        email: user.email,
+        rol: user.rol,
+      },
+    });
+  });
+});
 
 // ===============================
 // 📦 PRODUCTOS
@@ -192,71 +145,22 @@ app.get("/productos", (req, res) => {
       console.log(err);
       return res.json({ success: false });
     }
-
-    res.json({
-      success: true,
-      productos: result,
-    });
+    res.json({ success: true, productos: result });
   });
 });
 
 
 // ===============================
-// 🛒 CARRITO
+// 🛒 RUTAS DEL CARRITO
 // ===============================
-app.post("/carrito/agregar", (req, res) => {
-  const { usuario_id, producto_id } = req.body;
 
-  // 🔍 Buscar carrito del usuario
-  db.query(
-    "SELECT * FROM carrito WHERE usuario_id = ?",
-    [usuario_id],
-    (err, result) => {
-      if (err) return res.json({ success: false });
-
-      if (result.length > 0) {
-        const carritoId = result[0].id;
-
-        insertarItem(carritoId);
-      } else {
-        // crear carrito
-        db.query(
-          "INSERT INTO carrito (usuario_id) VALUES (?)",
-          [usuario_id],
-          (err2, result2) => {
-            if (err2) return res.json({ success: false });
-
-            insertarItem(result2.insertId);
-          }
-        );
-      }
-
-      function insertarItem(carritoId) {
-        db.query(
-          "INSERT INTO carrito_items (carrito_id, producto_id, cantidad) VALUES (?, ?, 1)",
-          [carritoId, producto_id],
-          (err3) => {
-            if (err3) return res.json({ success: false });
-
-            res.json({
-              success: true,
-              message: "Producto agregado",
-            });
-          }
-        );
-      }
-    }
-  );
-});
-// ===============================
-// 🛒 VER CARRITO
-// ===============================
+// 1. OBTENER EL CARRITO
 app.get("/carrito/:usuario_id", (req, res) => {
   const usuarioId = req.params.usuario_id;
-
   const sql = `
     SELECT 
       ci.id,
+      p.id as producto_id,
       p.nombre,
       p.precio,
       ci.cantidad,
@@ -268,172 +172,161 @@ app.get("/carrito/:usuario_id", (req, res) => {
   `;
 
   db.query(sql, [usuarioId], (err, result) => {
-    if (err) {
-      console.log(err);
-      return res.json({ success: false });
-    }
-
-    res.json({
-      success: true,
-      carrito: result,
-    });
+    if (err) return res.json({ success: false });
+    res.json({ success: true, carrito: result });
   });
 });
-// ===============================
-// ❌ ELIMINAR PRODUCTO
-// ===============================
-app.post("/carrito/eliminar", (req, res) => {
-  const { item_id } = req.body;
 
-  db.query(
-    "DELETE FROM carrito_items WHERE id = ?",
-    [item_id],
-    (err) => {
-      if (err) return res.json({ success: false });
+// 2. AGREGAR AL CARRITO (Nueva versión segura)
+app.post('/api/carrito/agregar', (req, res) => {
+    const { usuario_id, producto_id, cantidad } = req.body;
 
-      res.json({ success: true });
-    }
-  );
+    const queryBuscarCarrito = "SELECT id FROM carrito WHERE usuario_id = ?";
+    db.query(queryBuscarCarrito, [usuario_id], (err, carritos) => {
+        if (err) return res.status(500).json({ error: err.message });
+
+        if (carritos.length > 0) {
+            const carrito_id = carritos[0].id;
+            agregarItemAlCarrito(carrito_id, producto_id, cantidad || 1, res);
+        } else {
+            const queryCrearCarrito = "INSERT INTO carrito (usuario_id) VALUES (?)";
+            db.query(queryCrearCarrito, [usuario_id], (err, result) => {
+                if (err) return res.status(500).json({ error: err.message });
+                agregarItemAlCarrito(result.insertId, producto_id, cantidad || 1, res);
+            });
+        }
+    });
 });
-// ===============================
-// ➕ AUMENTAR
-// ===============================
+
+// Función auxiliar para insertar
+function agregarItemAlCarrito(carrito_id, producto_id, cantidad, res) {
+    const queryBuscarItem = "SELECT id, cantidad FROM carrito_items WHERE carrito_id = ? AND producto_id = ?";
+    db.query(queryBuscarItem, [carrito_id, producto_id], (err, items) => {
+        if (err) return res.status(500).json({ error: err.message });
+
+        if (items.length > 0) {
+            const nuevaCantidad = items[0].cantidad + cantidad;
+            const queryActualizar = "UPDATE carrito_items SET cantidad = ? WHERE id = ?";
+            db.query(queryActualizar, [nuevaCantidad, items[0].id], (err) => {
+                if (err) return res.status(500).json({ error: err.message });
+                res.json({ message: "Cantidad actualizada" });
+            });
+        } else {
+            const queryInsertar = "INSERT INTO carrito_items (carrito_id, producto_id, cantidad) VALUES (?, ?, ?)";
+            db.query(queryInsertar, [carrito_id, producto_id, cantidad], (err) => {
+                if (err) return res.status(500).json({ error: err.message });
+                res.json({ message: "Producto agregado" });
+            });
+        }
+    });
+}
+
+// 3. ELIMINAR DEL CARRITO (Unidad por unidad)
+app.post('/api/carrito/eliminar', (req, res) => {
+    const { usuario_id, producto_id } = req.body;
+    
+    // A. Buscar el carrito del usuario
+    const queryCarrito = "SELECT id FROM carrito WHERE usuario_id = ?";
+    db.query(queryCarrito, [usuario_id], (err, carritos) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (carritos.length === 0) return res.status(404).json({ error: "Carrito no encontrado" });
+        
+        const carrito_id = carritos[0].id;
+        
+        // B. Revisar cuántas unidades hay de este producto en el carrito
+        const queryBuscarItem = "SELECT id, cantidad FROM carrito_items WHERE carrito_id = ? AND producto_id = ?";
+        db.query(queryBuscarItem, [carrito_id, producto_id], (err, items) => {
+            if (err) return res.status(500).json({ error: err.message });
+            if (items.length === 0) return res.status(404).json({ error: "Producto no encontrado en el carrito" });
+
+            const item = items[0];
+
+            if (item.cantidad > 1) {
+                // C. Si hay más de 1, solo restamos 1 a la cantidad
+                const queryRestar = "UPDATE carrito_items SET cantidad = cantidad - 1 WHERE id = ?";
+                db.query(queryRestar, [item.id], (err) => {
+                    if (err) return res.status(500).json({ error: err.message });
+                    res.json({ success: true, message: "Se restó una unidad del producto" });
+                });
+            } else {
+                // D. Si solo queda 1 unidad, eliminamos el producto del carrito
+                const queryDelete = "DELETE FROM carrito_items WHERE id = ?";
+                db.query(queryDelete, [item.id], (err) => {
+                    if (err) return res.status(500).json({ error: err.message });
+                    res.json({ success: true, message: "Producto eliminado completamente del carrito" });
+                });
+            }
+        });
+    });
+});
+
+// 4. FINALIZAR COMPRA
+app.post('/api/carrito/finalizar', (req, res) => {
+    const { usuario_id, total } = req.body;
+
+    const queryOrden = "INSERT INTO orden_servicio (cliente_id, total, estado) VALUES (?, ?, 'pendiente')";
+    db.query(queryOrden, [usuario_id, total], (err, resultOrden) => {
+        if (err) return res.status(500).json({ error: "Error orden: " + err.message });
+        const orden_id = resultOrden.insertId;
+
+        const queryGetItems = `
+            SELECT ci.producto_id, ci.cantidad, p.precio 
+            FROM carrito_items ci 
+            JOIN carrito c ON ci.carrito_id = c.id 
+            JOIN productos p ON ci.producto_id = p.id
+            WHERE c.usuario_id = ?`;
+
+        db.query(queryGetItems, [usuario_id], (err, items) => {
+            if (err) return res.status(500).json({ error: "Error leyendo carrito: " + err.message });
+            if (items.length === 0) return res.status(400).json({ error: "El carrito está vacío" });
+
+            const valores = items.map(item => [orden_id, item.producto_id, item.cantidad, item.precio]);
+            const queryDetalle = "INSERT INTO detalle_orden (orden_id, producto_id, cantidad, precio) VALUES ?";
+            
+            db.query(queryDetalle, [valores], (err) => {
+                if (err) return res.status(500).json({ error: "Error en detalle: " + err.message });
+
+                // Vaciamos el carrito del usuario
+                const queryVaciar = "DELETE ci FROM carrito_items ci JOIN carrito c ON ci.carrito_id = c.id WHERE c.usuario_id = ?";
+                db.query(queryVaciar, [usuario_id], (err) => {
+                    if (err) return res.status(500).json({ error: "Error al vaciar: " + err.message });
+                    
+                    // 🔔 Crear notificación automática
+                    db.query(
+                      "INSERT INTO notificaciones (usuario_id, mensaje, tipo) VALUES (?, 'Tu compra fue realizada correctamente', 'compra')",
+                      [usuario_id]
+                    );
+
+                    res.json({ success: true, message: "Compra finalizada", orden_id: orden_id });
+                });
+            });
+        });
+    });
+});
+
+// AUMENTAR Y RESTAR (Botones de la interfaz vieja)
 app.post("/carrito/sumar", (req, res) => {
   const { item_id } = req.body;
-
-  db.query(
-    "UPDATE carrito_items SET cantidad = cantidad + 1 WHERE id = ?",
-    [item_id],
-    (err) => {
-      if (err) return res.json({ success: false });
-
-      res.json({ success: true });
-    }
-  );
-});
-// ===============================
-// ➖ RESTAR
-// ===============================
-app.post("/carrito/restar", (req, res) => {
-  const { item_id } = req.body;
-
-  db.query(
-    "UPDATE carrito_items SET cantidad = GREATEST(cantidad - 1, 1) WHERE id = ?",
-    [item_id],
-    (err) => {
-      if (err) return res.json({ success: false });
-
-      res.json({ success: true });
-    }
-  );
-});
-// ===============================
-// 💳 CHECKOUT
-// ===============================
-app.post("/checkout", (req, res) => {
-  const { usuario_id } = req.body;
-
-  // 1. Obtener carrito con productos
-  const sqlCarrito = `
-    SELECT 
-      c.id as carrito_id,
-      ci.producto_id,
-      ci.cantidad,
-      p.precio
-    FROM carrito c
-    JOIN carrito_items ci ON c.id = ci.carrito_id
-    JOIN productos p ON ci.producto_id = p.id
-    WHERE c.usuario_id = ?
-  `;
-
-  db.query(sqlCarrito, [usuario_id], (err, items) => {
-    if (err) {
-      console.log(err);
-      return res.json({ success: false });
-    }
-
-    if (items.length === 0) {
-      return res.json({
-        success: false,
-        error: "Carrito vacío",
-      });
-    }
-
-    // 2. Calcular total
-    let total = 0;
-    items.forEach((i) => {
-      total += i.precio * i.cantidad;
-    });
-
-    // 3. Crear orden
-    const sqlOrden = `
-      INSERT INTO orden_servicio (cliente_id, estado, total)
-      VALUES (?, 'pendiente', ?)
-    `;
-
-    db.query(sqlOrden, [usuario_id, total], (err2, resultOrden) => {
-      if (err2) {
-        console.log(err2);
-        return res.json({ success: false });
-      }
-
-      const ordenId = resultOrden.insertId;
-
-      // 4. Insertar detalle
-      const values = items.map((i) => [
-        ordenId,
-        i.producto_id,
-        i.cantidad,
-        i.precio,
-      ]);
-
-      const sqlDetalle = `
-        INSERT INTO detalle_orden (orden_id, producto_id, cantidad, precio)
-        VALUES ?
-      `;
-
-      db.query(sqlDetalle, [values], (err3) => {
-        if (err3) {
-          console.log(err3);
-          return res.json({ success: false });
-        }
-
-        // 5. Vaciar carrito
-        const carritoId = items[0].carrito_id;
-
-        db.query(
-          "DELETE FROM carrito_items WHERE carrito_id = ?",
-          [carritoId],
-          (err4) => {
-            if (err4) {
-              console.log(err4);
-              return res.json({ success: false });
-            }
-
-            // 6. Notificación (opcional)
-            db.query(
-              "INSERT INTO notificaciones (usuario_id, mensaje, tipo) VALUES (?, ?, 'compra')",
-              [usuario_id, "Tu compra fue realizada correctamente"],
-              () => {}
-            );
-
-            res.json({
-              success: true,
-              message: "Compra realizada",
-              orden_id: ordenId,
-            });
-          }
-        );
-      });
-    });
+  db.query("UPDATE carrito_items SET cantidad = cantidad + 1 WHERE id = ?", [item_id], (err) => {
+    if (err) return res.json({ success: false });
+    res.json({ success: true });
   });
 });
+
+app.post("/carrito/restar", (req, res) => {
+  const { item_id } = req.body;
+  db.query("UPDATE carrito_items SET cantidad = GREATEST(cantidad - 1, 1) WHERE id = ?", [item_id], (err) => {
+    if (err) return res.json({ success: false });
+    res.json({ success: true });
+  });
+});
+
+
 // ===============================
 // 📄 DETALLE ORDEN
 // ===============================
 app.get("/orden/detalle/:id", (req, res) => {
   const id = req.params.id;
-
   const sql = `
     SELECT p.nombre, d.cantidad, d.precio
     FROM detalle_orden d
@@ -443,89 +336,60 @@ app.get("/orden/detalle/:id", (req, res) => {
 
   db.query(sql, [id], (err, result) => {
     if (err) return res.json({ success: false });
-
     res.json({ success: true, detalle: result });
   });
 });
 
-
+// ===============================
+// 📦 ÓRDENES E HISTORIAL
+// ===============================
 app.get("/ordenes/tecnico", (req, res) => {
-  db.query(
-    "SELECT * FROM orden_servicio ORDER BY id DESC",
-    (err, result) => {
-      res.json({ success: true, data: result });
-    }
-  );
+  db.query("SELECT * FROM orden_servicio ORDER BY id DESC", (err, result) => {
+    res.json({ success: true, data: result });
+  });
 });
-// ===============================
-// 📦 HISTORIAL
-// ===============================
+
 app.get("/ordenes/:usuario_id", (req, res) => {
   const usuarioId = req.params.usuario_id;
-
-  db.query(
-    "SELECT * FROM orden_servicio WHERE cliente_id = ? ORDER BY id DESC",
-    [usuarioId],
-    (err, result) => {
-      if (err) return res.json({ success: false });
-
-      res.json({
-        success: true,
-        ordenes: result,
-      });
-    }
-  );
+  db.query("SELECT * FROM orden_servicio WHERE cliente_id = ? ORDER BY id DESC", [usuarioId], (err, result) => {
+    if (err) return res.json({ success: false });
+    res.json({ success: true, ordenes: result });
+  });
 });
 
-
-// 🔔 NOTIFICACIONES
-app.get("/notificaciones/:usuario_id", (req, res) => {
-  const usuarioId = req.params.usuario_id;
-
-  db.query(
-    "SELECT * FROM notificaciones WHERE usuario_id = ? ORDER BY id DESC",
-    [usuarioId],
-    (err, result) => {
-      if (err) {
-        console.log(err);
-        return res.json({ success: false });
-      }
-
-      res.json({
-        success: true,
-        data: result,
-      });
-    }
-  );
-});
 // ===============================
 // 🔧 CAMBIAR ESTADO ORDEN
 // ===============================
 app.post("/orden/estado", (req, res) => {
   const { orden_id, estado } = req.body;
 
-  db.query(
-    "UPDATE orden_servicio SET estado = ? WHERE id = ?",
-    [estado, orden_id],
-    (err) => {
-      if (err) return res.json({ success: false });
+  db.query("UPDATE orden_servicio SET estado = ? WHERE id = ?", [estado, orden_id], (err) => {
+    if (err) return res.json({ success: false });
 
-      // 🔔 Crear notificación automática
-      db.query(
-        "INSERT INTO notificaciones (usuario_id, mensaje, tipo) SELECT cliente_id, ?, 'servicio' FROM orden_servicio WHERE id = ?",
-        [`Tu orden ahora está: ${estado}`, orden_id]
-      );
+    // 🔔 Crear notificación automática
+    db.query(
+      "INSERT INTO notificaciones (usuario_id, mensaje, tipo) SELECT cliente_id, ?, 'servicio' FROM orden_servicio WHERE id = ?",
+      [`Tu orden ahora está: ${estado}`, orden_id]
+    );
 
-      res.json({
-        success: true,
-        message: "Estado actualizado",
-      });
-    }
-  );
+    res.json({ success: true, message: "Estado actualizado" });
+  });
 });
+
+// ===============================
+// 🔔 NOTIFICACIONES
+// ===============================
+app.get("/notificaciones/:usuario_id", (req, res) => {
+  const usuarioId = req.params.usuario_id;
+  db.query("SELECT * FROM notificaciones WHERE usuario_id = ? ORDER BY id DESC", [usuarioId], (err, result) => {
+    if (err) return res.json({ success: false });
+    res.json({ success: true, data: result });
+  });
+});
+
 // ===============================
 // 🚀 SERVER
 // ===============================
 app.listen(3000, "0.0.0.0", () => {
-  console.log("🚀 API corriendo en http://172.16.96.18:3000");
+  console.log("🚀 API corriendo en http://192.168.88.101:3000");
 });

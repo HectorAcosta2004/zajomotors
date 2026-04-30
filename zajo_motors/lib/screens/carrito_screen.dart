@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../providers/cart_provider.dart';
 import '../services/api_service.dart';
+import '../layouts/main_layout.dart';
 
 class CarritoScreen extends StatefulWidget {
   const CarritoScreen({super.key});
@@ -12,162 +15,141 @@ class CarritoScreen extends StatefulWidget {
 class _CarritoScreenState extends State<CarritoScreen> {
   final ApiService api = ApiService();
 
-  List carrito = [];
-  bool loading = true;
-  int usuarioId = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    cargarUsuario();
-  }
-
-  // 🔐 Obtener usuario
-  void cargarUsuario() async {
+  void _eliminarItem(Producto producto) async {
+    // 1. Obtenemos el usuario activo
     final prefs = await SharedPreferences.getInstance();
-    usuarioId = prefs.getInt("id") ?? 0;
+    final usuarioId = prefs.getInt("id") ?? 0;
 
-    cargarCarrito();
-  }
+    if (usuarioId == 0) return;
 
-  // 📦 Cargar carrito
-  void cargarCarrito() async {
-    final data = await api.getCarrito(usuarioId);
+    // 2. Mensaje visual
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Borrando de la base de datos..."),
+        duration: Duration(milliseconds: 500),
+      ),
+    );
 
-    setState(() {
-      carrito = data;
-      loading = false;
-    });
-  }
+    // 3. Ejecutamos la API (Pasamos usuario_id y producto_id)
+    bool exito = await api.eliminarDelCarrito(
+      usuarioId,
+      int.parse(producto.id),
+    );
 
-  // 💰 Calcular total
-  double calcularTotal() {
-    double total = 0;
-
-    for (var item in carrito) {
-      total += double.parse(item["total"].toString());
-    }
-
-    return total;
-  }
-
-  // 💳 Checkout
-  void hacerCheckout() async {
-    final response = await api.checkout(usuarioId);
-
-    if (response != null && response["success"] == true) {
+    if (exito) {
+      // Si se borró en MySQL, lo borramos de la pantalla
+      Provider.of<CartProvider>(
+        context,
+        listen: false,
+      ).eliminarDelCarrito(producto.id);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Compra realizada correctamente ✅")),
+        const SnackBar(
+          content: Text("✅ Producto eliminado"),
+          backgroundColor: Colors.green,
+        ),
       );
-
-      cargarCarrito(); // limpiar vista
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(response?["error"] ?? "Error en compra")),
+        const SnackBar(
+          content: Text("❌ Error al eliminar en la BD"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _realizarCompra() async {
+    final cart = Provider.of<CartProvider>(context, listen: false);
+    if (cart.items.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Tu carrito está vacío"),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final usuarioId = prefs.getInt("id") ?? 0;
+
+    if (usuarioId == 0) return;
+
+    double total = cart.items.fold(0, (sum, item) => sum + item.precio);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Generando orden en MySQL..."),
+        duration: Duration(seconds: 1),
+      ),
+    );
+
+    // Llamamos a la BD para finalizar
+    bool exito = await api.finalizarCompra(usuarioId, total);
+
+    if (exito) {
+      cart.vaciarCarrito(); // Vaciamos la pantalla
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("¡Compra Exitosa!"),
+          content: const Text("Tu orden ha sido guardada en la base de datos."),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Entendido"),
+            ),
+          ],
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("❌ Error del servidor al finalizar"),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Mi Carrito 🛒")),
+    final cart = context.watch<CartProvider>();
 
-      body: loading
-          ? const Center(child: CircularProgressIndicator())
-          : carrito.isEmpty
-          ? const Center(child: Text("Carrito vacío 😢"))
+    return MainLayout(
+      title: "Mi Carrito",
+      body: cart.items.isEmpty
+          ? const Center(child: Text("Tu carrito está vacío"))
           : Column(
               children: [
-                // 🛒 LISTA
                 Expanded(
                   child: ListView.builder(
-                    itemCount: carrito.length,
+                    itemCount: cart.items.length,
                     itemBuilder: (context, index) {
-                      final item = carrito[index];
-
-                      return Card(
-                        margin: const EdgeInsets.all(10),
-                        elevation: 3,
-                        child: ListTile(
-                          title: Text(
-                            item["nombre"],
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-
-                          subtitle: Text(
-                            "Cantidad: ${item["cantidad"]} | \$${item["total"]}",
-                          ),
-
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // ➖ RESTAR
-                              IconButton(
-                                icon: const Icon(Icons.remove),
-                                onPressed: () async {
-                                  await api.restar(item["id"]);
-                                  cargarCarrito();
-                                },
-                              ),
-
-                              // ➕ SUMAR
-                              IconButton(
-                                icon: const Icon(Icons.add),
-                                onPressed: () async {
-                                  await api.sumar(item["id"]);
-                                  cargarCarrito();
-                                },
-                              ),
-
-                              // ❌ ELIMINAR
-                              IconButton(
-                                icon: const Icon(Icons.delete),
-                                onPressed: () async {
-                                  await api.eliminarItem(item["id"]);
-                                  cargarCarrito();
-                                },
-                              ),
-                            ],
-                          ),
+                      final p = cart.items[index];
+                      return ListTile(
+                        title: Text(p.nombre),
+                        subtitle: Text("\$${p.precio}"),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => _eliminarItem(p), // BOTÓN ELIMINAR
                         ),
                       );
                     },
                   ),
                 ),
-
-                // 💰 TOTAL + BOTÓN
-                Container(
+                Padding(
                   padding: const EdgeInsets.all(20),
-                  decoration: const BoxDecoration(
-                    border: Border(top: BorderSide(color: Colors.grey)),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        "Total: \$${calcularTotal()}",
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: hacerCheckout,
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.all(15),
-                          ),
-                          child: const Text(
-                            "Finalizar compra 💳",
-                            style: TextStyle(fontSize: 16),
-                          ),
-                        ),
-                      ),
-                    ],
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 50),
+                      backgroundColor: Colors.blue,
+                    ),
+                    onPressed: _realizarCompra, // BOTÓN FINALIZAR
+                    child: const Text(
+                      "Finalizar Compra",
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
                 ),
               ],

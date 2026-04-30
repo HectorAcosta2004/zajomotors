@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  final String baseUrl = "http://172.16.96.18:3000";
+  final String baseUrl = "http://192.168.88.101:3000";
 
   // 🆕 REGISTER
   Future<Map?> register(String nombre, String email, String password) async {
@@ -28,6 +28,66 @@ class ApiService {
     } catch (e) {
       print("ERROR REGISTER: $e");
       return {"success": false, "error": "No hay conexión con el servidor"};
+    }
+  }
+
+  // Eliminar un producto del carrito en la base de datos
+  Future<bool> eliminarDelCarrito(int usuarioId, int productoId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/carrito/eliminar'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"usuario_id": usuarioId, "producto_id": productoId}),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print("Error de conexión: $e");
+      return false;
+    }
+  }
+
+  // Finalizar la compra y crear la orden
+  Future<bool> finalizarCompra(int usuarioId, double total) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/carrito/finalizar'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"usuario_id": usuarioId, "total": total}),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print("Error de conexión: $e");
+      return false;
+    }
+  }
+
+  //CARRITO
+  Future<bool> agregarAlCarritoDB(
+    int usuarioId,
+    int productoId,
+    int cantidad,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/carrito/agregar'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "usuario_id": usuarioId,
+          "producto_id": productoId,
+          "cantidad": cantidad,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print("Agregado exitosamente a MySQL");
+        return true;
+      } else {
+        print("Error del servidor: ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      print("Error de conexión: $e");
+      return false;
     }
   }
 

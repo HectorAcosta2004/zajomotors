@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../layouts/main_layout.dart';
 import '../services/api_service.dart';
+import '../providers/cart_provider.dart';
 
 class CatalogoScreen extends StatefulWidget {
   const CatalogoScreen({super.key});
@@ -14,15 +17,12 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
 
   List productos = [];
   bool loading = true;
-
-  String origen = "cliente"; // 🔥 default
+  String origen = "cliente";
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
     final args = ModalRoute.of(context)?.settings.arguments;
-
     if (args != null && args is Map) {
       origen = args["from"] ?? "cliente";
     }
@@ -36,7 +36,6 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
 
   void cargarProductos() async {
     final data = await api.getProductos();
-
     setState(() {
       productos = data;
       loading = false;
@@ -76,7 +75,6 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
                     ),
                     child: Column(
                       children: [
-                        // 🖼️ Imagen
                         Expanded(
                           child: ClipRRect(
                             borderRadius: const BorderRadius.vertical(
@@ -90,8 +88,6 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
                             ),
                           ),
                         ),
-
-                        // 📦 INFO
                         Padding(
                           padding: const EdgeInsets.all(10),
                           child: Column(
@@ -106,14 +102,80 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
                               Text("\$${p["precio"]}"),
                               const SizedBox(height: 10),
 
-                              // 🔥 SOLO CLIENTE VE BOTÓN
+                              // 🔥 BOTÓN AGREGAR CONEXIÓN A BASE DE DATOS
                               if (origen != "admin")
                                 ElevatedButton(
-                                  onPressed: () {},
+                                  onPressed: () async {
+                                    // 1. Obtenemos el ID del usuario activo
+                                    final prefs =
+                                        await SharedPreferences.getInstance();
+                                    final usuarioId = prefs.getInt("id") ?? 0;
+
+                                    if (usuarioId == 0) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Error: Debes iniciar sesión primero',
+                                          ),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    // 2. Enviamos la petición al servidor (MySQL)
+                                    bool exito = await api.agregarAlCarritoDB(
+                                      usuarioId,
+                                      int.parse(p["id"].toString()),
+                                      1, // Cantidad agregada por defecto
+                                    );
+
+                                    if (exito) {
+                                      // 3. Opcional: Agregar al provider para uso rápido en UI
+                                      final nuevoProducto = Producto(
+                                        id: p["id"].toString(),
+                                        nombre: p["nombre"],
+                                        precio: double.parse(
+                                          p["precio"].toString(),
+                                        ),
+                                      );
+
+                                      Provider.of<CartProvider>(
+                                        context,
+                                        listen: false,
+                                      ).agregarAlCarrito(nuevoProducto);
+
+                                      // 4. Feedback visual de éxito
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            '${p["nombre"]} agregado al carrito',
+                                          ),
+                                          backgroundColor: Colors.green,
+                                          duration: const Duration(seconds: 1),
+                                        ),
+                                      );
+                                    } else {
+                                      // 5. Feedback visual de error en servidor
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Error al guardar en la base de datos',
+                                          ),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  },
                                   child: const Text("Agregar"),
                                 ),
 
-                              // 👑 ADMIN VE BOTÓN EDITAR
                               if (origen == "admin")
                                 ElevatedButton(
                                   style: ElevatedButton.styleFrom(
