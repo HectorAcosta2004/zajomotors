@@ -285,56 +285,47 @@ app.post("/carrito/restar", (req, res) => {
 });
 
 // ===============================
-// 📄 DETALLE ORDEN (MEJORADO: Productos + Servicios)
+// 📄 DETALLE ORDEN (Consultas Divididas)
 // ===============================
 app.get("/orden/detalle/:id", (req, res) => {
   const id = req.params.id;
 
-  // Esta consulta busca en ambas tablas y junta los resultados
-  const sql = `
+  // 1. Consulta solo para PRODUCTOS
+  const sqlProductos = `
     SELECT p.nombre, d.cantidad, d.precio
     FROM detalle_orden d
     JOIN productos p ON d.producto_id = p.id
     WHERE d.orden_id = ?
-    
-    UNION ALL
-    
+  `;
+
+  // 2. Consulta solo para SERVICIOS
+  const sqlServicios = `
     SELECT s.nombre, 1 as cantidad, ds.precio
     FROM detalle_servicio ds
     JOIN servicios s ON ds.servicio_id = s.id
     WHERE ds.orden_id = ?
   `;
 
-  db.query(sql, [id, id], (err, result) => {
-    if (err) {
-      console.log("❌ Error al obtener detalle:", err);
-      return res.json({ success: false });
-    }
-    res.json({ success: true, detalle: result });
-  });
-});
-app.get("/ordenes/tecnico", (req, res) => {
-  db.query("SELECT * FROM orden_servicio ORDER BY id DESC", (err, result) => {
-    res.json({ success: true, data: result });
-  });
-});
+  // Primero buscamos los productos
+  db.query(sqlProductos, [id], (err1, productos) => {
+    if (err1) return res.json({ success: false, error: "Error en productos" });
 
-app.get("/ordenes/:usuario_id", (req, res) => {
-  db.query("SELECT * FROM orden_servicio WHERE cliente_id = ? ORDER BY id DESC", [req.params.usuario_id], (err, result) => {
-    if (err) return res.json({ success: false });
-    res.json({ success: true, ordenes: result });
+    // Luego buscamos los servicios
+    db.query(sqlServicios, [id], (err2, servicios) => {
+      if (err2) return res.json({ success: false, error: "Error en servicios" });
+
+      // Juntamos ambas listas de forma segura (si una está vacía, no afecta a la otra)
+      const listaProductos = productos || [];
+      const listaServicios = servicios || [];
+      const detalleFinal = [...listaProductos, ...listaServicios];
+
+      res.json({ 
+        success: true, 
+        detalle: detalleFinal 
+      });
+    });
   });
 });
-
-app.post("/orden/estado", (req, res) => {
-  const { orden_id, estado } = req.body;
-  db.query("UPDATE orden_servicio SET estado = ? WHERE id = ?", [estado, orden_id], (err) => {
-    if (err) return res.json({ success: false });
-    db.query("INSERT INTO notificaciones (usuario_id, mensaje, tipo) SELECT cliente_id, ?, 'servicio' FROM orden_servicio WHERE id = ?", [`Tu orden ahora está: ${estado}`, orden_id]);
-    res.json({ success: true, message: "Estado actualizado" });
-  });
-});
-
 // ===============================
 // 🔔 NOTIFICACIONES
 // ===============================
@@ -349,5 +340,5 @@ app.get("/notificaciones/:usuario_id", (req, res) => {
 // 🚀 SERVER
 // ===============================
 app.listen(3000, "0.0.0.0", () => {
-  console.log("🚀 API corriendo en http://192.168.88.101:3000");
+  console.log("🚀 API corriendo en http://172.16.96.181:3000");
 });
