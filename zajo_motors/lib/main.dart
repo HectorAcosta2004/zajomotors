@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'package:zajo_motors/providers/cart_provider.dart';
 
+import 'screens/ordenes_tecnico_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
@@ -54,9 +55,9 @@ class MyApp extends StatelessWidget {
         "/carrito": (context) => const CarritoScreen(),
         "/servicios": (context) => const ServiciosScreen(),
 
+        "/ordenes_tecnico": (context) => const OrdenesTecnicoScreen(),
         "/notificaciones": (context) => const NotificacionesScreen(),
         "/perfil": (context) => const PerfilScreen(),
-
         "/usuarios": (context) => const UsuariosScreen(),
         "/sucursales": (context) => const SucursalesScreen(),
         "/compras": (context) => const ComprasScreen(),
