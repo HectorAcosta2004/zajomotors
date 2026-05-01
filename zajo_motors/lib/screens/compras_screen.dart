@@ -44,15 +44,25 @@ class _ComprasScreenState extends State<ComprasScreen> {
     }
   }
 
-  void _actualizarEstado(int ordenId, String nuevoEstado) async {
+  void _actualizarEstado(int ordenId, String nuevoEstado, int index) async {
+    // 1. Actualizamos la vista de Inmediato (sin esperar al servidor)
+    setState(() {
+      ordenes[index]["estado"] = nuevoEstado;
+    });
+
+    // 2. Le avisamos a Node.js en silencio de fondo
     bool ok = await api.cambiarEstadoOrden(ordenId, nuevoEstado);
+
     if (ok) {
-      cargarTodasLasOrdenes();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Estado actualizado y cliente notificado"),
+          content: Text("Estado guardado correctamente"),
+          duration: Duration(seconds: 1),
         ),
       );
+    } else {
+      // Si el servidor falla o no hay internet, recargamos la lista original para corregir
+      cargarTodasLasOrdenes();
     }
   }
 
@@ -173,8 +183,11 @@ class _ComprasScreenState extends State<ComprasScreen> {
                                       child: Text("Cancelado"),
                                     ),
                                   ],
-                                  onChanged: (val) =>
-                                      _actualizarEstado(o["id"], val!),
+                                  onChanged: (val) {
+                                    if (val != null) {
+                                      _actualizarEstado(o["id"], val, index);
+                                    }
+                                  },
                                 ),
                               ),
                             ),

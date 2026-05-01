@@ -129,6 +129,28 @@ app.get("/admin/todas-las-ordenes", (req, res) => {
   });
 });
 // ===============================
+// 🔄 CAMBIAR ESTADO DE LA ORDEN (Y NOTIFICAR)
+// ===============================
+app.post("/orden/estado", (req, res) => {
+  const { orden_id, estado } = req.body;
+
+  // 1. Actualizamos el estado en la tabla de órdenes
+  const sqlUpdate = "UPDATE orden_servicio SET estado = ? WHERE id = ?";
+  
+  db.query(sqlUpdate, [estado, orden_id], (err, result) => {
+    if (err) {
+      console.log("❌ Error al cambiar estado:", err.message);
+      return res.json({ success: false, error: err.message });
+    }
+
+    // (Opcional pero recomendado) Aquí podríamos insertar una notificación para el cliente
+    console.log(`✅ Orden #${orden_id} actualizada a: ${estado}`);
+    
+    // Le decimos a Flutter que todo salió perfecto
+    res.json({ success: true, message: "Estado actualizado correctamente" });
+  });
+});
+// ===============================
 // 📍 GESTIÓN DE SUCURSALES
 // ===============================
 
