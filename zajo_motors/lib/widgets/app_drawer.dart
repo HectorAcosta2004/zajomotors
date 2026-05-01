@@ -116,6 +116,8 @@ class _AppDrawerState extends State<AppDrawer> {
         item(Icons.shopping_cart, "Mi carrito", "/carrito"),
         item(Icons.build, "Servicios", "/servicios"),
         item(Icons.history, "Historial", "/historial"),
+        // 🔥 AÑADIDO: Sucursales para que el cliente las vea
+        item(Icons.location_on, "Sucursales", "/sucursales"),
         item(Icons.notifications, "Notificaciones", "/notificaciones"),
         item(Icons.person, "Mi perfil", "/perfil"),
       ];
@@ -153,8 +155,8 @@ class _AppDrawerState extends State<AppDrawer> {
         leading: Icon(icon, color: Colors.blueGrey),
         title: Text(title),
         onTap: () {
-          Navigator.pop(context);
-          Navigator.pushNamed(context, route);
+          Navigator.pop(context); // Cierra el drawer primero
+          Navigator.pushNamed(context, route); // Navega a la pantalla
         },
       ),
     );
