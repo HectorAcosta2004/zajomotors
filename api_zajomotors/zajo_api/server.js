@@ -53,6 +53,16 @@ app.post("/register", (req, res) => {
     }
   );
 });
+// ===============================
+// 📦 HISTORIAL DE ÓRDENES
+// ===============================
+app.get("/ordenes/:usuario_id", (req, res) => {
+  const usuarioId = req.params.usuario_id;
+  db.query("SELECT * FROM orden_servicio WHERE cliente_id = ? ORDER BY id DESC", [usuarioId], (err, result) => {
+    if (err) return res.json({ success: false });
+    res.json({ success: true, ordenes: result });
+  });
+});
 
 // ===============================
 // 🔐 LOGIN
