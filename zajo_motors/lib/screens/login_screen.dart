@@ -162,16 +162,35 @@ class _LoginScreenState extends State<LoginScreen> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            backgroundColor: const Color(0xFF2C5364),
+                            // 🔥 Color llamativo para resaltar el botón
+                            backgroundColor: Colors.orange.shade700,
+                            foregroundColor: Colors.white,
                           ),
                           child: Text(
                             loading ? "Cargando..." : "Iniciar sesión",
-                            style: const TextStyle(fontSize: 16),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
 
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 5),
+
+                      // 🔥 NUEVO BOTÓN: OLVIDÉ MI CONTRASEÑA
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, "/recuperar_password");
+                        },
+                        child: const Text(
+                          "¿Olvidaste tu contraseña?",
+                          style: TextStyle(
+                            color: Colors.blueGrey,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
 
                       // REGISTRO
                       TextButton(
@@ -183,7 +202,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           );
                         },
-                        child: const Text("Crear cuenta"),
+                        child: const Text(
+                          "Crear cuenta nueva",
+                          style: TextStyle(color: Colors.black54),
+                        ),
                       ),
                     ],
                   ),

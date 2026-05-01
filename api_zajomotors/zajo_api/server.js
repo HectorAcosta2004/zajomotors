@@ -455,6 +455,33 @@ app.get("/notificaciones/:usuario_id", (req, res) => {
 });
 
 // ===============================
+// 🔐 RECUPERAR CONTRASEÑA (CLIENTE)
+// ===============================
+app.post("/usuario/recuperar-password", async (req, res) => {
+  const { email, nueva_password } = req.body;
+  
+  try {
+    // 1. Verificamos si el correo existe
+    db.query("SELECT * FROM usuarios WHERE email = ?", [email], async (err, result) => {
+      if (err) return res.json({ success: false, error: err.message });
+      
+      // Si el arreglo está vacío, el correo no existe
+      if (result.length === 0) {
+        return res.json({ success: false, message: "Este correo no está registrado" });
+      }
+
+      // 2. Si existe, encriptamos la nueva contraseña y la guardamos
+      const hash = await bcrypt.hash(nueva_password, 10);
+      db.query("UPDATE usuarios SET password = ? WHERE email = ?", [hash, email], (err2) => {
+        if (err2) return res.json({ success: false, error: err2.message });
+        res.json({ success: true, message: "Contraseña actualizada correctamente" });
+      });
+    });
+  } catch (error) {
+    res.json({ success: false, error: error.message });
+  }
+});
+// ===============================
 // 🚀 SERVER
 // ===============================
 app.listen(3000, "0.0.0.0", () => {

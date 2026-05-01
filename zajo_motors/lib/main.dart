@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'package:zajo_motors/providers/cart_provider.dart';
 
+import 'screens/recuperar_password_screen.dart';
 import 'screens/ordenes_tecnico_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
@@ -54,7 +55,7 @@ class MyApp extends StatelessWidget {
         "/catalogo_admin": (context) => const CatalogoAdminScreen(),
         "/carrito": (context) => const CarritoScreen(),
         "/servicios": (context) => const ServiciosScreen(),
-
+        "/recuperar_password": (context) => const RecuperarPasswordScreen(),
         "/ordenes_tecnico": (context) => const OrdenesTecnicoScreen(),
         "/notificaciones": (context) => const NotificacionesScreen(),
         "/perfil": (context) => const PerfilScreen(),

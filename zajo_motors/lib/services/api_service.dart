@@ -543,4 +543,23 @@ class ApiService {
       body: jsonEncode({"id": id}),
     );
   }
+
+  // 🔐 RECUPERAR CONTRASEÑA
+  Future<Map<String, dynamic>> recuperarPassword(
+    String email,
+    String nuevaPassword,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/usuario/recuperar-password"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"email": email, "nueva_password": nuevaPassword}),
+      );
+      return jsonDecode(
+        response.body,
+      ); // Retornamos todo el mapa para leer el 'message'
+    } catch (e) {
+      return {"success": false, "message": "Error de conexión al servidor"};
+    }
+  }
 }
