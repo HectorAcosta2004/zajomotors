@@ -151,6 +151,43 @@ class ApiService {
     }
   }
 
+  // 📋 OBTENER TODAS LAS ÓRDENES (Segura contra nulos)
+  // 📋 OBTENER TODAS LAS ÓRDENES (ADMIN)
+  Future<List> getTodasLasOrdenes() async {
+    try {
+      // 🔥 LA NUEVA RUTA ÚNICA PARA QUE NO CHOQUE
+      final response = await http.get(
+        Uri.parse("$baseUrl/admin/todas-las-ordenes"),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data["success"] == true && data["data"] != null) {
+          return List.from(data["data"]);
+        }
+      }
+      return [];
+    } catch (e) {
+      print("Error al obtener todas las órdenes: $e");
+      return [];
+    }
+  }
+
+  // 🔄 CAMBIAR ESTADO DE LA ORDEN
+  Future<bool> cambiarEstadoOrden(int ordenId, String nuevoEstado) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/orden/estado"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"orden_id": ordenId, "estado": nuevoEstado}),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print("Error al cambiar estado: $e");
+      return false;
+    }
+  }
+
   // ➕ CREAR SUCURSAL (ADMIN)
   Future<bool> crearSucursal(
     String nombre,

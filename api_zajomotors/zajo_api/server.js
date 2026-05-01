@@ -113,6 +113,22 @@ app.post("/usuario/password", async (req, res) => {
 });
 
 // ===============================
+// 📋 OBTENER TODAS LAS ÓRDENES (ADMIN)
+// ===============================
+app.get("/admin/todas-las-ordenes", (req, res) => {
+  const sql = `
+    SELECT o.*, u.nombre as cliente_nombre 
+    FROM orden_servicio o 
+    LEFT JOIN usuarios u ON o.cliente_id = u.id 
+    ORDER BY o.id DESC
+  `;
+  
+  db.query(sql, (err, result) => {
+    if (err) return res.json({ success: false, error: err.message });
+    res.json({ success: true, data: result });
+  });
+});
+// ===============================
 // 📍 GESTIÓN DE SUCURSALES
 // ===============================
 
