@@ -46,7 +46,74 @@ class ApiService {
     }
   }
 
-  // 🛠️ OBTENER SERVICIOS
+  // 👥 OBTENER TODOS LOS USUARIOS
+  Future<List> getUsuarios() async {
+    try {
+      final response = await http.get(Uri.parse("$baseUrl/usuarios"));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data["success"] == true ? data["usuarios"] : [];
+      }
+      return [];
+    } catch (e) {
+      print("Error al obtener usuarios: $e");
+      return [];
+    }
+  }
+
+  // 📝 EDITAR USUARIO
+  Future<bool> editarUsuario(
+    int id,
+    String nombre,
+    String email,
+    String rol,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/usuario/editar"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "id": id,
+          "nombre": nombre,
+          "email": email,
+          "rol": rol,
+        }),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // 🗑️ ELIMINAR USUARIO
+  Future<bool> eliminarUsuario(int id) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/usuario/eliminar"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"id": id}),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // 🔑 CAMBIAR CONTRASEÑA (ADMIN)
+  Future<bool> cambiarPasswordAdmin(int id, String nuevaPassword) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/usuario/password"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"id": id, "password": nuevaPassword}),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print("Error al cambiar password: $e");
+      return false;
+    }
+  }
+
   // 🛠️ OBTENER SERVICIOS
   Future<List> getServicios() async {
     try {
@@ -67,6 +134,43 @@ class ApiService {
     } catch (e) {
       print("❌ ERROR SERVICIOS: $e");
       return [];
+    }
+  }
+
+  // 📍 OBTENER SUCURSALES
+  Future<List> getSucursales() async {
+    try {
+      final response = await http.get(Uri.parse("$baseUrl/sucursales"));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data["success"] == true ? data["sucursales"] : [];
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // ➕ CREAR SUCURSAL (ADMIN)
+  Future<bool> crearSucursal(
+    String nombre,
+    String direccion,
+    String telefono,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/api/sucursales/crear"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "nombre": nombre,
+          "direccion": direccion,
+          "telefono": telefono,
+          "imagen": "img/sucursal.jpg", // Imagen fija por ahora
+        }),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
     }
   }
 

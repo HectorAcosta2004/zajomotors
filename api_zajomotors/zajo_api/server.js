@@ -63,6 +63,76 @@ app.get("/ordenes/:usuario_id", (req, res) => {
     res.json({ success: true, ordenes: result });
   });
 });
+// ===============================
+// 👥 GESTIÓN DE USUARIOS (ADMIN)
+// ===============================
+
+// 1. Obtener todos los usuarios
+app.get("/usuarios", (req, res) => {
+  db.query("SELECT id, nombre, email, rol FROM usuarios", (err, result) => {
+    if (err) return res.json({ success: false, error: err.message });
+    res.json({ success: true, usuarios: result });
+  });
+});
+
+// 2. Editar usuario
+app.post("/usuario/editar", (req, res) => {
+  const { id, nombre, email, rol } = req.body;
+  const sql = "UPDATE usuarios SET nombre = ?, email = ?, rol = ? WHERE id = ?";
+  
+  db.query(sql, [nombre, email, rol, id], (err) => {
+    if (err) return res.json({ success: false, error: err.message });
+    res.json({ success: true, message: "Usuario actualizado correctamente" });
+  });
+});
+
+// 3. Eliminar usuario
+app.post("/usuario/eliminar", (req, res) => {
+  const { id } = req.body;
+  db.query("DELETE FROM usuarios WHERE id = ?", [id], (err) => {
+    if (err) return res.json({ success: false, error: err.message });
+    res.json({ success: true, message: "Usuario eliminado" });
+  });
+});
+// 4. Cambiar contraseña de un usuario (ADMIN)
+app.post("/usuario/password", async (req, res) => {
+  const { id, password } = req.body;
+  
+  try {
+    // Encriptamos la nueva contraseña antes de guardarla
+    const hash = await bcrypt.hash(password, 10);
+    const sql = "UPDATE usuarios SET password = ? WHERE id = ?";
+    
+    db.query(sql, [hash, id], (err) => {
+      if (err) return res.json({ success: false, error: err.message });
+      res.json({ success: true, message: "Contraseña actualizada" });
+    });
+  } catch (error) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
+// ===============================
+// 📍 GESTIÓN DE SUCURSALES
+// ===============================
+
+// 1. Obtener todas las sucursales (Para Clientes y Admin)
+app.get("/sucursales", (req, res) => {
+  db.query("SELECT * FROM sucursales", (err, result) => {
+    if (err) return res.json({ success: false, error: err.message });
+    res.json({ success: true, sucursales: result });
+  });
+});
+
+// 2. Crear nueva sucursal (Solo Admin)
+app.post("/api/sucursales/crear", (req, res) => {
+  const { nombre, direccion, telefono, imagen } = req.body;
+  const sql = "INSERT INTO sucursales (nombre, direccion, telefono, imagen) VALUES (?, ?, ?, ?)";
+  db.query(sql, [nombre, direccion, telefono, imagen || 'img/sucursal_default.jpg'], (err) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true, message: "Sucursal agregada con éxito" });
+  });
+});
 
 // ===============================
 // 🔐 LOGIN
