@@ -536,16 +536,21 @@ app.post('/api/send-notification', async (req, res) => {
       },
       {
         headers: {
-          "Authorization": "Basic TU_REST_API_KEY_AQUI", // Reemplaza con tu REST API KEY real
+          "Authorization": "Basic os_v2_app_6ynqf4eufnfyzfjyprr5anvtvtzdk2hierjucqfz7okutgvrdbkrdsiieoinsjbw4i33gabnozxa7jw4ampol2mdsthljin6l72ypti", // Reemplaza con tu REST API KEY real
           "Content-Type": "application/json"
         }
       }
     );
     res.status(200).json({ success: true, data: response.data });
   } catch (error) {
-    console.error("Error en OneSignal:", error.response?.data || error.message);
-    res.status(500).json({ success: false, error: "Fallo al enviar" });
-  }
+    console.error("Error detallado de OneSignal:", error.response ? error.response.data : error.message);
+    
+    res.status(500).json({ 
+        success: false, 
+        error: "Fallo al enviar",
+        details: error.response ? error.response.data : error.message // Agregamos esto
+    });
+}
 });
 // ===============================
 // 🚀 SERVER
