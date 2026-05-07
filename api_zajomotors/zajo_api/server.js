@@ -520,17 +520,31 @@ app.post("/usuario/recuperar-password", async (req, res) => {
 
 // Nuevo endpoint para enviar notificaciones
 app.post('/api/send-notification', async (req, res) => {
+  // Extraemos title y body (exactamente como vienen de Flutter)
   const { title, body } = req.body;
 
-  const message = {
-    notification: { title, body },
-    topic: 'all_users' // Asegúrate de suscribir a los clientes a este tópico al iniciar la app
-  };
+  console.log("Intentando enviar notificación:", { title, body });
 
   try {
-    res.status(200).json({ message: "Notificación enviada con éxito" });
+    const response = await axios.post(
+      'https://onesignal.com/api/v1/notifications',
+      {
+        app_id: "f61b02f0-942b-4b8c-9538-7c63d036b3ac",
+        headings: { "en": title },
+        contents: { "en": body },
+        included_segments: ["All"],
+      },
+      {
+        headers: {
+          "Authorization": "Basic TU_REST_API_KEY_AQUI", // Reemplaza con tu REST API KEY real
+          "Content-Type": "application/json"
+        }
+      }
+    );
+    res.status(200).json({ success: true, data: response.data });
   } catch (error) {
-    res.status(500).json({ error: "Error al enviar notificación", details: error });
+    console.error("Error en OneSignal:", error.response?.data || error.message);
+    res.status(500).json({ success: false, error: "Fallo al enviar" });
   }
 });
 // ===============================

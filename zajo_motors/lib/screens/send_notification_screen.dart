@@ -12,21 +12,27 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
   final ApiService _apiService = ApiService();
 
   void _sendNotification() async {
-    // Asegúrate de usar 'title' y 'body', NO 'titulo' ni 'cuerpo'
-    final response = await _apiService.post('/api/send-notification', {
-      'title': _titleController.text,
-      'body': _bodyController.text,
-    });
+    try {
+      // Usamos 'title' y 'body' que son las llaves que funcionaron en Postman
+      final response = await _apiService.post('/api/send-notification', {
+        'title': _titleController.text,
+        'body': _bodyController.text,
+      });
 
-    if (response.statusCode == 200) {
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("¡Notificación enviada!")));
+        _titleController.clear();
+        _bodyController.clear();
+      } else {
+        print("Error del servidor: ${response.body}");
+      }
+    } catch (e) {
+      print("Error de red: $e");
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text("Éxito!")));
-    } else {
-      print("Error del servidor: ${response.body}");
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error: ${response.statusCode}")));
+      ).showSnackBar(SnackBar(content: Text("Error de conexión: $e")));
     }
   }
 

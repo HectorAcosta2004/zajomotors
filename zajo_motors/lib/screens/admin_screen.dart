@@ -21,6 +21,13 @@ class AdminScreen extends StatelessWidget {
             _item(context, Icons.attach_money, "Compras", "/compras"),
             _item(
               context,
+              Icons.notification_add,
+              "Mandar Notificación",
+              "/send_notification",
+            ),
+
+            _item(
+              context,
               Icons.notifications,
               "Notificaciones",
               "/notificaciones",
