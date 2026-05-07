@@ -28,9 +28,9 @@ class AdminScreen extends StatelessWidget {
 
             _item(
               context,
-              Icons.notifications,
-              "Notificaciones",
-              "/notificaciones",
+              Icons.history,
+              "Historial de Notificaciones",
+              "/AdminNotificationsScreen",
             ),
           ],
         ),

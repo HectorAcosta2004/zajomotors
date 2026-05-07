@@ -8,9 +8,6 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-// Configuración de OneSignal
-const ONESIGNAL_REST_API_KEY = "os_v2_app_6ynqf4eufnfyzfjyprr5anvtvsoqvjzzj5regc47gshn6aubzmrkjsesyvj4dzar6kelqoivsdemlu6zk62etbpmddpujflvr2c2buq"; // <--- CAMBIA ESTO
-const ONESIGNAL_APP_ID = "f61b02f0-942b-4b8c-9538-7c63d036b3ac";
 
 // 🔌 MYSQL
 const db = mysql.createConnection({
@@ -28,22 +25,19 @@ db.connect((err) => {
   }
 });
 
-// ===============================
-// 🔔 ENDPOINT DE NOTIFICACIONES (OneSignal)
-// ===============================
-app.post('/api/enviar-notificacion', async (req, res) => {
-  // Asegúrate de que aquí diga 'title' y 'body'
-  const { title, body } = req.body; 
-  
-  console.log("Recibido:", title, body); 
+//ENVIAR NOTIFICACIONES
+app.post('/api/send-notification', async (req, res) => {
+  const { title, body } = req.body;
+
+  console.log("Intentando enviar notificación:", { title, body });
 
   try {
     const response = await axios.post(
       'https://onesignal.com/api/v1/notifications',
       {
-        app_id: ONESIGNAL_APP_ID,
-        headings: { "en": title }, // Aquí asignas el valor
-        contents: { "en": body },   // Aquí asignas el valor
+        app_id: "f61b02f0-942b-4b8c-9538-7c63d036b3ac",
+        headings: { "en": title },
+        contents: { "en": body },
         included_segments: ["All"],
       },
       {
@@ -54,6 +48,38 @@ app.post('/api/enviar-notificacion', async (req, res) => {
       }
     );
     res.status(200).json({ success: true, data: response.data });
+  } catch (error) {
+    console.error("Error detallado de OneSignal:", error.response ? error.response.data : error.message);
+    res.status(500).json({ 
+        success: false, 
+        error: "Fallo al enviar",
+        details: error.response ? error.response.data : error.message 
+    });
+}
+});
+//HISTORIAL DE NOTIFICACIONES
+ONESIGNAL_REST_API_KEY = "os_v2_app_6ynqf4eufnfyzfjyprr5anvtvtyukcnjlbbua6fvcirvac2e6sqpq5gvjdzl57tdrba67wwgetz5h5euffaftoctdkcmzhx3rvedlgi";
+app.get('/api/historial-notificaciones', async (req, res) => {
+  try {
+    const response = await axios.get('https://onesignal.com/api/v1/notifications', {
+      params: { 
+        app_id: "f61b02f0-942b-4b8c-9538-7c63d036b3ac",
+        limit: 50,
+        kind: 1 // 1 representa notificaciones de "Push", esto ayuda a filtrar
+      },
+      headers: {
+        "Authorization": `Basic ${ONESIGNAL_REST_API_KEY}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    // IMPORTANTE: Imprime en la consola de Node para ver qué llega antes de enviarlo a Flutter
+    console.log("Respuesta completa de OneSignal:", response.data);
+
+    res.status(200).json({ 
+      success: true, 
+      data: response.data.notifications || [] 
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -516,42 +542,7 @@ app.post("/usuario/recuperar-password", async (req, res) => {
     res.json({ success: false, error: error.message });
   }
 });
-// Asegúrate de inicializar Firebase con tu serviceAccountKey.json
 
-// Nuevo endpoint para enviar notificaciones
-app.post('/api/send-notification', async (req, res) => {
-  // Extraemos title y body (exactamente como vienen de Flutter)
-  const { title, body } = req.body;
-
-  console.log("Intentando enviar notificación:", { title, body });
-
-  try {
-    const response = await axios.post(
-      'https://onesignal.com/api/v1/notifications',
-      {
-        app_id: "f61b02f0-942b-4b8c-9538-7c63d036b3ac",
-        headings: { "en": title },
-        contents: { "en": body },
-        included_segments: ["All"],
-      },
-      {
-        headers: {
-          "Authorization": "Basic os_v2_app_6ynqf4eufnfyzfjyprr5anvtvtzdk2hierjucqfz7okutgvrdbkrdsiieoinsjbw4i33gabnozxa7jw4ampol2mdsthljin6l72ypti", // Reemplaza con tu REST API KEY real
-          "Content-Type": "application/json"
-        }
-      }
-    );
-    res.status(200).json({ success: true, data: response.data });
-  } catch (error) {
-    console.error("Error detallado de OneSignal:", error.response ? error.response.data : error.message);
-    
-    res.status(500).json({ 
-        success: false, 
-        error: "Fallo al enviar",
-        details: error.response ? error.response.data : error.message // Agregamos esto
-    });
-}
-});
 // ===============================
 // 🚀 SERVER
 // ===============================

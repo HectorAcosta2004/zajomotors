@@ -117,7 +117,6 @@ class _AppDrawerState extends State<AppDrawer> {
         item(Icons.shopping_cart, "Mi carrito", "/carrito"),
         item(Icons.build, "Servicios", "/servicios"),
         item(Icons.history, "Historial", "/historial"),
-        // 🔥 AÑADIDO: Sucursales para que el cliente las vea
         item(Icons.location_on, "Sucursales", "/sucursales"),
         item(Icons.notifications, "Notificaciones", "/notificaciones"),
         item(Icons.person, "Mi perfil", "/perfil"),
@@ -143,7 +142,7 @@ class _AppDrawerState extends State<AppDrawer> {
           "/send_notification",
         ),
         item(Icons.attach_money, "Compras", "/compras"),
-        item(Icons.notifications, "Notificaciones", "/notificaciones"),
+        item(Icons.history, "Historial de Notificaciones", "/notificaciones"),
         item(Icons.person, "Perfil", "/perfil"),
       ];
     }
