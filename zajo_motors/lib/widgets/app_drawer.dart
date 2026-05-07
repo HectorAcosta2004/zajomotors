@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../screens/send_notification_screen.dart'; // Ajusta la ruta si es necesario
 
 class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key});
@@ -136,6 +137,11 @@ class _AppDrawerState extends State<AppDrawer> {
         item(Icons.people, "Usuarios", "/usuarios"),
         item(Icons.store, "Catálogo", "/catalogo_admin"),
         item(Icons.location_on, "Sucursales", "/sucursales"),
+        item(
+          Icons.notifications_active,
+          "Enviar Notificación",
+          "/send_notification",
+        ),
         item(Icons.attach_money, "Compras", "/compras"),
         item(Icons.notifications, "Notificaciones", "/notificaciones"),
         item(Icons.person, "Perfil", "/perfil"),

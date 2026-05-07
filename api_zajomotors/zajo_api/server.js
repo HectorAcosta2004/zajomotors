@@ -2,11 +2,15 @@ const express = require("express");
 const mysql = require("mysql");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
+const axios = require("axios");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+// Configuración de OneSignal
+const ONESIGNAL_REST_API_KEY = "os_v2_app_6ynqf4eufnfyzfjyprr5anvtvsoqvjzzj5regc47gshn6aubzmrkjsesyvj4dzar6kelqoivsdemlu6zk62etbpmddpujflvr2c2buq"; // <--- CAMBIA ESTO
+const ONESIGNAL_APP_ID = "f61b02f0-942b-4b8c-9538-7c63d036b3ac";
 
 // 🔌 MYSQL
 const db = mysql.createConnection({
@@ -21,6 +25,37 @@ db.connect((err) => {
     console.log("❌ Error MySQL:", err);
   } else {
     console.log("✅ MySQL conectado");
+  }
+});
+
+// ===============================
+// 🔔 ENDPOINT DE NOTIFICACIONES (OneSignal)
+// ===============================
+app.post('/api/enviar-notificacion', async (req, res) => {
+  // Asegúrate de que aquí diga 'title' y 'body'
+  const { title, body } = req.body; 
+  
+  console.log("Recibido:", title, body); 
+
+  try {
+    const response = await axios.post(
+      'https://onesignal.com/api/v1/notifications',
+      {
+        app_id: ONESIGNAL_APP_ID,
+        headings: { "en": title }, // Aquí asignas el valor
+        contents: { "en": body },   // Aquí asignas el valor
+        included_segments: ["All"],
+      },
+      {
+        headers: {
+          "Authorization": `Basic ${ONESIGNAL_REST_API_KEY}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+    res.status(200).json({ success: true, data: response.data });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -481,9 +516,26 @@ app.post("/usuario/recuperar-password", async (req, res) => {
     res.json({ success: false, error: error.message });
   }
 });
+// Asegúrate de inicializar Firebase con tu serviceAccountKey.json
+
+// Nuevo endpoint para enviar notificaciones
+app.post('/api/send-notification', async (req, res) => {
+  const { title, body } = req.body;
+
+  const message = {
+    notification: { title, body },
+    topic: 'all_users' // Asegúrate de suscribir a los clientes a este tópico al iniciar la app
+  };
+
+  try {
+    res.status(200).json({ message: "Notificación enviada con éxito" });
+  } catch (error) {
+    res.status(500).json({ error: "Error al enviar notificación", details: error });
+  }
+});
 // ===============================
 // 🚀 SERVER
 // ===============================
 app.listen(3000, "0.0.0.0", () => {
-  console.log("🚀 API corriendo en http://172.16.96.181:3000");
+  console.log("🚀 API corriendo en http://192.168.88.138:3000");
 });
