@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../screens/send_notification_screen.dart'; // Ajusta la ruta si es necesario
 
 class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key});
@@ -126,11 +125,14 @@ class _AppDrawerState extends State<AppDrawer> {
     if (rol == "tecnico") {
       return [
         item(Icons.build_circle, "Órdenes", "/ordenes_tecnico"),
-        item(Icons.notifications_active, "Notificaciones", "/notificaciones"),
+        item(
+          Icons.person_pin,
+          "Notificar a Cliente",
+          "/notificaciones_servicio",
+        ), // 🆕
         item(Icons.person, "Mi perfil", "/perfil"),
       ];
     }
-
     if (rol == "admin") {
       return [
         item(Icons.people, "Usuarios", "/usuarios"),

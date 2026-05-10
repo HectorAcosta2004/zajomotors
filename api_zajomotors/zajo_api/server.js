@@ -58,7 +58,7 @@ app.post('/api/send-notification', async (req, res) => {
 }
 });
 //HISTORIAL DE NOTIFICACIONES
-ONESIGNAL_REST_API_KEY = "os_v2_app_6ynqf4eufnfyzfjyprr5anvtvtyukcnjlbbua6fvcirvac2e6sqpq5gvjdzl57tdrba67wwgetz5h5euffaftoctdkcmzhx3rvedlgi";
+ONESIGNAL_REST_API_KEY = "os_v2_app_6ynqf4eufnfyzfjyprr5anvtvtpu54gli3teas5un3sc4bta4powgkiu5utuh7oot5d6vjp26j2f6v6mjv7wvqd7fwx4n37jquplyei";
 app.get('/api/historial-notificaciones', async (req, res) => {
   try {
     const response = await axios.get('https://onesignal.com/api/v1/notifications', {
@@ -80,6 +80,32 @@ app.get('/api/historial-notificaciones', async (req, res) => {
       success: true, 
       data: response.data.notifications || [] 
     });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+//NOTIFICACION SOLO PARA CLIENTE
+app.post('/api/notificar-cliente', async (req, res) => {
+  const { cliente_id, titulo, cuerpo } = req.body;
+
+  try {
+    const response = await axios.post(
+      'https://onesignal.com/api/v1/notifications',
+      {
+        app_id: "f61b02f0-942b-4b8c-9538-7c63d036b3ac",
+        headings: { "en": titulo },
+        contents: { "en": cuerpo },
+        // Esto busca al cliente por el ID que vinculaste en el LoginScreen
+        include_external_user_ids: [cliente_id.toString()], 
+      },
+      {
+        headers: {
+          "Authorization": `Basic ${ONESIGNAL_REST_API_KEY}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+    res.json({ success: true, data: response.data });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -113,6 +139,22 @@ app.post("/register", (req, res) => {
       );
     }
   );
+});
+app.post('/api/notificar-cliente', async (req, res) => {
+  const { cliente_id, titulo, cuerpo } = req.body;
+  try {
+    await axios.post('https://onesignal.com/api/v1/notifications', {
+      app_id: "f61b02f0-942b-4b8c-9538-7c63d036b3ac",
+      headings: { "en": titulo },
+      contents: { "en": cuerpo },
+      include_external_user_ids: [cliente_id.toString()], 
+    }, {
+      headers: { "Authorization": `Basic ${ONESIGNAL_REST_API_KEY}` }
+    });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false });
+  }
 });
 // ===============================
 // 📦 HISTORIAL DE ÓRDENES
@@ -547,5 +589,5 @@ app.post("/usuario/recuperar-password", async (req, res) => {
 // 🚀 SERVER
 // ===============================
 app.listen(3000, "0.0.0.0", () => {
-  console.log("🚀 API corriendo en http://192.168.88.138:3000");
+  console.log("🚀 API corriendo en http://192.168.88.101:3000");
 });

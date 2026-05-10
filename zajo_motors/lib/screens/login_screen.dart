@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart'; // 🔥 IMPORTANTE
 
 import '../services/api_service.dart';
 import 'home_screen.dart';
@@ -17,9 +18,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final email = TextEditingController();
   final password = TextEditingController();
-
   final ApiService api = ApiService();
-
   bool loading = false;
 
   void loginUser() async {
@@ -32,9 +31,16 @@ class _LoginScreenState extends State<LoginScreen> {
     if (response != null && response["success"] == true) {
       final user = response["user"];
       String rol = user["rol"];
+      int userId = user["id"]; // 🔥 Obtenemos el ID del usuario
+
+      // ---------------------------------------------------------
+      // 🔔 VINCULACIÓN CON ONESIGNAL
+      // Esto asocia este dispositivo con el ID de tu DB MySQL
+      // ---------------------------------------------------------
+      OneSignal.login(userId.toString());
 
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt("id", user["id"]);
+      await prefs.setInt("id", userId);
       await prefs.setString("nombre", user["nombre"]);
       await prefs.setString("email", user["email"]);
       await prefs.setString("rol", rol);

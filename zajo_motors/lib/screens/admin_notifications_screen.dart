@@ -21,14 +21,19 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
 
   void _fetchNotifications() async {
     try {
+      // Llamada al endpoint
       final response = await _apiService.get('/api/historial-notificaciones');
 
-      // CAMBIO AQUÍ: Tu API devuelve la lista en 'data', no en 'notifications'
+      print("DEBUG: Respuesta completa -> $response");
+
       if (response['success'] == true) {
         setState(() {
+          // CAMBIO CLAVE: Usar 'data' en lugar de 'notifications'
           _notifications = response['data'] ?? [];
           _isLoading = false;
         });
+      } else {
+        setState(() => _isLoading = false);
       }
     } catch (e) {
       setState(() => _isLoading = false);
