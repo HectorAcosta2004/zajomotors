@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart'; // Para el logout limpio
 
 class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key});
@@ -20,7 +21,6 @@ class _AppDrawerState extends State<AppDrawer> {
 
   void loadUser() async {
     final prefs = await SharedPreferences.getInstance();
-
     setState(() {
       nombre = prefs.getString("nombre") ?? "";
       rol = prefs.getString("rol") ?? "";
@@ -30,6 +30,9 @@ class _AppDrawerState extends State<AppDrawer> {
   void logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
+
+    // Desvinculamos OneSignal para que no lleguen notificaciones de este usuario
+    OneSignal.logout();
 
     Navigator.pushNamedAndRemoveUntil(context, "/login", (route) => false);
   }
@@ -41,7 +44,7 @@ class _AppDrawerState extends State<AppDrawer> {
         color: Colors.grey[100],
         child: Column(
           children: [
-            // 🔥 HEADER MODERNO
+            // HEADER CON GRADIENTE
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 40),
@@ -78,7 +81,7 @@ class _AppDrawerState extends State<AppDrawer> {
 
             const SizedBox(height: 10),
 
-            // 🔽 MENÚ
+            // LISTADO DE OPCIONES
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -86,7 +89,7 @@ class _AppDrawerState extends State<AppDrawer> {
               ),
             ),
 
-            // 🔴 LOGOUT BONITO
+            // BOTÓN DE LOGOUT
             Padding(
               padding: const EdgeInsets.all(10),
               child: ListTile(
@@ -97,7 +100,10 @@ class _AppDrawerState extends State<AppDrawer> {
                 leading: const Icon(Icons.logout, color: Colors.red),
                 title: const Text(
                   "Cerrar sesión",
-                  style: TextStyle(color: Colors.red),
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 onTap: logout,
               ),
@@ -108,14 +114,13 @@ class _AppDrawerState extends State<AppDrawer> {
     );
   }
 
-  // 🎯 MENÚ POR ROL
   List<Widget> buildMenu() {
     if (rol == "cliente") {
       return [
         item(Icons.store, "Catálogo", "/catalogo"),
         item(Icons.shopping_cart, "Mi carrito", "/carrito"),
         item(Icons.build, "Servicios", "/servicios"),
-        item(Icons.history, "Historial", "/historial"),
+        item(Icons.history, "Historial de Órdenes", "/historial"),
         item(Icons.location_on, "Sucursales", "/sucursales"),
         item(Icons.notifications, "Notificaciones", "/notificaciones"),
         item(Icons.person, "Mi perfil", "/perfil"),
@@ -124,27 +129,30 @@ class _AppDrawerState extends State<AppDrawer> {
 
     if (rol == "tecnico") {
       return [
-        item(Icons.build_circle, "Órdenes", "/ordenes_tecnico"),
+        item(Icons.build_circle, "Órdenes Asignadas", "/ordenes_tecnico"),
         item(
           Icons.person_pin,
           "Notificar a Cliente",
           "/notificaciones_servicio",
-        ), // 🆕
+        ),
         item(Icons.person, "Mi perfil", "/perfil"),
       ];
     }
+
     if (rol == "admin") {
       return [
-        item(Icons.people, "Usuarios", "/usuarios"),
-        item(Icons.store, "Catálogo", "/catalogo_admin"),
+        // CORREGIDO: Icono de gráficas y ruta al Dashboard
+        item(Icons.bar_chart_rounded, "Dashboard / Gráficas", "/admin"),
+        item(Icons.people, "Gestión de Usuarios", "/usuarios"),
+        item(Icons.store, "Catálogo Admin", "/catalogo_admin"),
         item(Icons.location_on, "Sucursales", "/sucursales"),
         item(
           Icons.notifications_active,
           "Enviar Notificación",
           "/send_notification",
         ),
-        item(Icons.attach_money, "Compras", "/compras"),
-        item(Icons.history, "Historial de Notificaciones", "/notificaciones"),
+        item(Icons.attach_money, "Reporte de Compras", "/compras"),
+        item(Icons.history, "Historial Notificaciones", "/notificaciones"),
         item(Icons.person, "Perfil", "/perfil"),
       ];
     }
@@ -152,18 +160,17 @@ class _AppDrawerState extends State<AppDrawer> {
     return [];
   }
 
-  // 🎨 ITEM BONITO
   Widget item(IconData icon, String title, String route) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 5),
       child: ListTile(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         tileColor: Colors.white,
-        leading: Icon(icon, color: Colors.blueGrey),
-        title: Text(title),
+        leading: Icon(icon, color: const Color(0xFF2C5364)),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
         onTap: () {
-          Navigator.pop(context); // Cierra el drawer primero
-          Navigator.pushNamed(context, route); // Navega a la pantalla
+          Navigator.pop(context); // Cierra el drawer
+          Navigator.pushNamed(context, route); // Navega
         },
       ),
     );

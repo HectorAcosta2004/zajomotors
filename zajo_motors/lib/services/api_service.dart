@@ -114,6 +114,46 @@ class ApiService {
     }
   }
 
+  Future<List<dynamic>> getOrdenesTecnico() async {
+    try {
+      final response = await http.get(Uri.parse("$baseUrl/ordenes/tecnico"));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        // Verificamos si la respuesta tiene éxito y trae la lista 'data'
+        if (data['success'] == true && data['data'] != null) {
+          return data['data'] as List<dynamic>;
+        } else {
+          print("Servidor respondió success:false o data nula");
+          return []; // Retorna lista vacía si no hay datos
+        }
+      } else {
+        print("Error de servidor: ${response.statusCode}");
+        return []; // Retorna lista vacía si el status no es 200
+      }
+    } catch (e) {
+      print("Error de conexión en ApiService: $e");
+      return []; // 🔥 ESTO EVITA EL ERROR: Siempre devuelve una lista, nunca null
+    }
+  }
+
+  //ESTADISTICAS ADMIN
+  Future<Map<String, dynamic>> getEstadisticasAdmin(String filtro) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$baseUrl/api/admin/estadisticas?filtro=$filtro"),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return {"success": false};
+    } catch (e) {
+      print("Error en Stats: $e");
+      return {"success": false};
+    }
+  }
+
   // 🛠️ OBTENER SERVICIOS
   Future<List> getServicios() async {
     try {
@@ -411,13 +451,6 @@ class ApiService {
     } else {
       throw Exception('Error al cargar datos');
     }
-  }
-
-  Future<List> getOrdenesTecnico() async {
-    final response = await http.get(Uri.parse("$baseUrl/ordenes/tecnico"));
-
-    final data = jsonDecode(response.body);
-    return data["data"];
   }
 
   // 🔧 CAMBIAR ESTADO

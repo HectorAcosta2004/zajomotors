@@ -1,84 +1,84 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
-import 'enviar_notificacion_detalle_screen.dart';
 
-class NotificacionesServicioScreen extends StatefulWidget {
-  const NotificacionesServicioScreen({super.key});
+class NotificarServicioScreen extends StatefulWidget {
+  final String? clienteId;
+  final String? clienteNombre;
+  final String? servicioNombre;
+
+  // Constructor que recibe los datos
+  const NotificarServicioScreen({
+    super.key,
+    this.clienteId,
+    this.clienteNombre,
+    this.servicioNombre,
+  });
 
   @override
-  State<NotificacionesServicioScreen> createState() =>
-      _NotificacionesServicioScreenState();
+  State<NotificarServicioScreen> createState() =>
+      _NotificarServicioScreenState();
 }
 
-class _NotificacionesServicioScreenState
-    extends State<NotificacionesServicioScreen> {
+class _NotificarServicioScreenState extends State<NotificarServicioScreen> {
   final ApiService api = ApiService();
-  List<dynamic> _pendientes = [];
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchPendientes();
-  }
-
-  void _fetchPendientes() async {
-    setState(() => _isLoading = true);
-    try {
-      // Este método debe retornar la lista de órdenes con nombres de clientes y servicios
-      final data = await api.getOrdenesTecnico();
-      setState(() {
-        _pendientes = data ?? [];
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-    }
-  }
+  final TextEditingController _mensajeController = TextEditingController();
+  bool _isSending = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Seleccionar Cliente")),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: _pendientes.length,
-              itemBuilder: (context, index) {
-                final item = _pendientes[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 15,
-                    vertical: 8,
-                  ),
-                  child: ListTile(
-                    leading: const CircleAvatar(child: Icon(Icons.person)),
-                    title: Text(
-                      item['cliente_nombre'] ??
-                          "Cliente #${item['usuario_id']}",
+      appBar: AppBar(title: const Text("Enviar Avance")),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          children: [
+            // TARJETA DE INFORMACIÓN RECIBIDA
+            Card(
+              color: Colors.blueGrey[50],
+              child: Padding(
+                padding: const EdgeInsets.all(15.0),
+                child: Column(
+                  children: [
+                    // USAMOS widget.nombre para mostrar lo que recibimos
+                    Text(
+                      "Cliente: ${widget.clienteNombre ?? 'Sin Nombre'}",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
                     ),
-                    subtitle: Text(
-                      "Servicio: ${item['servicio_nombre'] ?? 'General'}",
+                    Text(
+                      "Servicio: ${widget.servicioNombre ?? 'Sin Servicio'}",
                     ),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () {
-                      // Al seleccionar, vamos a la vista de envío pasando los datos
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => EnviarNotificacionDetalleScreen(
-                            clienteId: item['usuario_id'].toString(),
-                            clienteNombre: item['cliente_nombre'] ?? "Cliente",
-                            servicioNombre:
-                                item['servicio_nombre'] ?? "Servicio",
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                );
-              },
+                    Text(
+                      "ID: ${widget.clienteId ?? 'Sin ID'}",
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
             ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: _mensajeController,
+              decoration: const InputDecoration(
+                labelText: "Mensaje de avance",
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _isSending ? null : _enviar,
+              child: Text(_isSending ? "Enviando..." : "Enviar Notificación"),
+            ),
+          ],
+        ),
+      ),
     );
+  }
+
+  void _enviar() async {
+    // Lógica de envío usando widget.clienteId
   }
 }

@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:onesignal_flutter/onesignal_flutter.dart'; // 🔥 IMPORTANTE
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 
 import '../services/api_service.dart';
-import 'home_screen.dart';
-import 'admin_screen.dart';
-import 'tecnico_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -22,49 +19,62 @@ class _LoginScreenState extends State<LoginScreen> {
   bool loading = false;
 
   void loginUser() async {
+    // Validación básica de campos vacíos
+    if (email.text.trim().isEmpty || password.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Por favor, llena todos los campos")),
+      );
+      return;
+    }
+
     setState(() => loading = true);
 
-    final response = await api.login(email.text.trim(), password.text.trim());
+    try {
+      final response = await api.login(email.text.trim(), password.text.trim());
 
-    setState(() => loading = false);
+      if (response != null && response['success'] == true) {
+        final user = response['user'];
 
-    if (response != null && response["success"] == true) {
-      final user = response["user"];
-      String rol = user["rol"];
-      int userId = user["id"]; // 🔥 Obtenemos el ID del usuario
+        // 1. GUARDAR EN PREFERENCIAS
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt('id', user['id']);
+        await prefs.setString('nombre', user['nombre']);
+        await prefs.setString('rol', user['rol']);
 
-      // ---------------------------------------------------------
-      // 🔔 VINCULACIÓN CON ONESIGNAL
-      // Esto asocia este dispositivo con el ID de tu DB MySQL
-      // ---------------------------------------------------------
-      OneSignal.login(userId.toString());
+        // 2. VINCULAR CON ONESIGNAL
+        // Usamos el ID de la base de datos como External ID para notificaciones directas
+        OneSignal.login(user['id'].toString());
 
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt("id", userId);
-      await prefs.setString("nombre", user["nombre"]);
-      await prefs.setString("email", user["email"]);
-      await prefs.setString("rol", rol);
+        // 3. REDIRECCIÓN SEGÚN ROL
+        String rol = user['rol'].toString().toLowerCase();
 
-      if (rol == "admin") {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const AdminScreen()),
-        );
-      } else if (rol == "tecnico") {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const TecnicoScreen()),
-        );
+        if (!mounted) return; // Verificación de seguridad para BuildContext
+
+        if (rol == 'admin') {
+          Navigator.pushReplacementNamed(context, '/admin');
+        } else if (rol == 'tecnico') {
+          Navigator.pushReplacementNamed(context, '/tecnico');
+        } else {
+          // 🎯 REDIRECCIÓN DIRECTA AL CATÁLOGO PARA CLIENTES
+          Navigator.pushReplacementNamed(context, '/catalogo');
+        }
       } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              response?['message'] ?? "Correo o contraseña incorrectos",
+            ),
+          ),
         );
       }
-    } else {
+    } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(response?["error"] ?? "Error login")),
+        const SnackBar(content: Text("Error de conexión con el servidor")),
       );
+    } finally {
+      if (mounted) setState(() => loading = false);
     }
   }
 
@@ -80,8 +90,6 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: Container(
         width: double.infinity,
-
-        // 🔥 FONDO GRADIENTE
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFF0F2027), Color(0xFF203A43), Color(0xFF2C5364)],
@@ -89,18 +97,13 @@ class _LoginScreenState extends State<LoginScreen> {
             end: Alignment.bottomCenter,
           ),
         ),
-
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(25),
-
             child: Column(
               children: [
-                // 🚗 LOGO / TITULO
                 const Icon(Icons.directions_car, size: 80, color: Colors.white),
-
                 const SizedBox(height: 10),
-
                 const Text(
                   "Zajo Motors",
                   style: TextStyle(
@@ -109,10 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     color: Colors.white,
                   ),
                 ),
-
                 const SizedBox(height: 30),
-
-                // 📦 CARD LOGIN
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -126,12 +126,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                   ),
-
                   child: Column(
                     children: [
-                      // EMAIL
                       TextField(
                         controller: email,
+                        keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
                           prefixIcon: const Icon(Icons.email),
                           labelText: "Correo",
@@ -140,10 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 15),
-
-                      // PASSWORD
                       TextField(
                         controller: password,
                         obscureText: true,
@@ -155,10 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 20),
-
-                      // BOTÓN LOGIN
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -168,7 +161,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            // 🔥 Color llamativo para resaltar el botón
                             backgroundColor: Colors.orange.shade700,
                             foregroundColor: Colors.white,
                           ),
@@ -181,14 +173,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ),
-
-                      const SizedBox(height: 5),
-
-                      // 🔥 NUEVO BOTÓN: OLVIDÉ MI CONTRASEÑA
+                      const SizedBox(height: 10),
                       TextButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, "/recuperar_password");
-                        },
+                        onPressed: () =>
+                            Navigator.pushNamed(context, "/recuperar_password"),
                         child: const Text(
                           "¿Olvidaste tu contraseña?",
                           style: TextStyle(
@@ -197,8 +185,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ),
-
-                      // REGISTRO
                       TextButton(
                         onPressed: () {
                           Navigator.push(

@@ -58,7 +58,7 @@ app.post('/api/send-notification', async (req, res) => {
 }
 });
 //HISTORIAL DE NOTIFICACIONES
-ONESIGNAL_REST_API_KEY = "os_v2_app_6ynqf4eufnfyzfjyprr5anvtvtpu54gli3teas5un3sc4bta4powgkiu5utuh7oot5d6vjp26j2f6v6mjv7wvqd7fwx4n37jquplyei";
+ONESIGNAL_REST_API_KEY = "os_v2_app_6ynqf4eufnfyzfjyprr5anvtvsuuxzrqmrdu6w4u37gshfmyo42friqoh2xcmcaqt3y27z63lonsd7b7kah77fhnsv25sxovbugh4ma";
 app.get('/api/historial-notificaciones', async (req, res) => {
   try {
     const response = await axios.get('https://onesignal.com/api/v1/notifications', {
@@ -375,6 +375,80 @@ app.post("/api/servicios/agendar", (req, res) => {
         });
     });
   });
+});
+
+// En tu server.js
+app.get('/api/ordenes/tecnico', (req, res) => {
+    const query = `
+        SELECT 
+            o.id, 
+            o.usuario_id, 
+            o.estado,
+            u.nombre AS cliente_nombre, 
+            s.nombre AS servicio_nombre
+        FROM ordenes o
+        LEFT JOIN usuarios u ON o.usuario_id = u.id
+        LEFT JOIN servicios s ON o.servicio_id = s.id
+        WHERE o.estado != 'Finalizado'
+    `;
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error("Error SQL:", err);
+            return res.status(500).json({ success: false, error: err.message });
+        }
+        
+        // 🔍 REVISA TU CONSOLA DE NODE.JS (la terminal negra)
+        console.log("Datos encontrados:", results);
+        
+        // Enviamos 'data' para que coincida con lo que busca tu ApiService
+        res.json({ success: true, data: results });
+    });
+});
+
+//ESTADISTICAS ADMIN
+app.get('/api/admin/estadisticas', (req, res) => {
+    const { filtro } = req.query;
+    let intervalo = '7 DAY';
+    if (filtro === 'Mes') intervalo = '1 MONTH';
+    if (filtro === 'Año') intervalo = '1 YEAR';
+
+    const sqlResumen = `
+        SELECT 
+          (SELECT SUM(total) FROM ventas WHERE fecha >= DATE_SUB(NOW(), INTERVAL ${intervalo})) as totalVentas,
+          (SELECT COUNT(*) FROM ordenes WHERE estado = 'Finalizado' AND fecha >= DATE_SUB(NOW(), INTERVAL ${intervalo})) as totalServicios,
+          (SELECT p.nombre FROM productos p 
+           JOIN detalle_ventas dv ON p.id = dv.producto_id 
+           GROUP BY p.id ORDER BY COUNT(*) DESC LIMIT 1) as productoEstrella
+    `;
+
+    db.query(sqlResumen, (err, resumen) => {
+        if (err) {
+            console.error("Error en MySQL:", err);
+            // El 'return' es vital para que no intente ejecutar lo de abajo
+            return res.status(500).json({ success: false, error: err.message });
+        }
+
+        const sqlGrafica = `
+            SELECT DATE(fecha) as fecha, SUM(total) as monto 
+            FROM ventas 
+            WHERE fecha >= DATE_SUB(NOW(), INTERVAL ${intervalo})
+            GROUP BY DATE(fecha) ORDER BY fecha ASC
+        `;
+
+        db.query(sqlGrafica, (err, puntos) => {
+            if (err) {
+                console.error("Error en Gráfica:", err);
+                return res.status(500).json({ success: false, error: err.message });
+            }
+
+            res.json({
+                success: true,
+                resumen: resumen[0] || { totalVentas: 0, totalServicios: 0, productoEstrella: "N/A" },
+                puntosGrafica: puntos
+            });
+        });
+    });
 });
 
 // ===============================
