@@ -58,7 +58,7 @@ app.post('/api/send-notification', async (req, res) => {
 }
 });
 //HISTORIAL DE NOTIFICACIONES
-ONESIGNAL_REST_API_KEY = "os_v2_app_6ynqf4eufnfyzfjyprr5anvtvsuuxzrqmrdu6w4u37gshfmyo42friqoh2xcmcaqt3y27z63lonsd7b7kah77fhnsv25sxovbugh4ma";
+ONESIGNAL_REST_API_KEY = "os_v2_app_6ynqf4eufnfyzfjyprr5anvtvr4y645ohdtu265oylgzbqarqpmskrpocnlh2uw55njy756wcenkwvgcebz6jqdqqu7yv5jpgncezoy";
 app.get('/api/historial-notificaciones', async (req, res) => {
   try {
     const response = await axios.get('https://onesignal.com/api/v1/notifications', {
@@ -389,7 +389,7 @@ app.get('/api/ordenes/tecnico', (req, res) => {
         FROM ordenes o
         LEFT JOIN usuarios u ON o.usuario_id = u.id
         LEFT JOIN servicios s ON o.servicio_id = s.id
-        WHERE o.estado != 'Finalizado'
+        WHERE o.estado != 'Finalizado's
     `;
 
     db.query(query, (err, results) => {
